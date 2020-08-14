@@ -18,8 +18,6 @@ function nextEventFirePromise(target, eventType) {
 	});
 }
 
-// TODO start loading next image while showing current image
-// TODO add support for videos
 // TODO wrap debug text display in function
 
 let lastImageContent = null;
