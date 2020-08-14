@@ -86,3 +86,16 @@
 	animation-direction: reverse;
 	animation-fill-mode: forwards;
 }
+
+/* obs doesn't redraw the browser soruce often enough when a video is playing for whatever reason */
+/* so we need to do this */
+@keyframes imperceptible_jitter_anim {
+	0%   { transform: translateX(0px); }
+	100% { transform: translateX(0.001px); }
+}
+.imperceptible_jitter {
+	animation-name: imperceptible_jitter_anim;
+	animation-duration: 0016.66666666s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}

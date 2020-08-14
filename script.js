@@ -19,26 +19,41 @@ function nextEventFirePromise(target, eventType) {
 	return new Promise((resolve, reject) => {
 		function event(e) {
 			target.removeEventListener(eventType, event);
-			resolve(e);
+			target.removeEventListener('error', event);
+			if(e.type === 'error') reject(e);
+			else resolve(e);
 		}
 		target.addEventListener(eventType, event);
+		target.addEventListener('error', event);
 	});
 }
 
 let lastImageContent = null;
 async function nextImage() {
+	let currentImage = imagesList[imagesListIndex];
+
 	let templateInstance = template.cloneNode(true);
 	// FIXME these are kinda ugly
 	let slideshowContent = templateInstance.getElementsByClassName('template_content_root')[0];
-	let slideshowImage = templateInstance.getElementsByClassName('template_media')[0];
 	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
+	let mediaPlaceholder = templateInstance.getElementsByClassName('template_media_placeholder')[0];
+	let slideshowMedia;
+	if(currentImage.type === 'image') slideshowMedia = document.createElement('img');
+	else if(currentImage.type === 'video') slideshowMedia = document.createElement('video');
+	else throw new Error('Unreachable State');
+	slideshowMedia.classList.add('slideshow_image');
+	mediaPlaceholder.replaceWith(slideshowMedia);
 
-	slideshowArtistName.innerText = imagesList[imagesListIndex].artist;
-
-	slideshowImage.src = imagesList[imagesListIndex].path;
+	slideshowArtistName.innerText = currentImage.artist;
 	
+	if(currentImage.type === 'image') slideshowMedia.src = currentImage.path;
+	else if(currentImage.type === 'video') slideshowMedia.src = currentImage.path;
+	else throw new Error('Unreachable State');
+
 	setDebugStatus('waiting for next image to load');
-	await nextEventFirePromise(slideshowImage, 'load');
+	if(currentImage.type === 'image') await nextEventFirePromise(slideshowMedia, 'load');
+	else if(currentImage.type === 'video') await nextEventFirePromise(slideshowMedia, 'loadeddata');
+	else throw new Error('Unreachable State');
 	clearDebugStatus();
 	
 	if(lastImageContent != null) {
@@ -55,8 +70,23 @@ async function nextImage() {
 	slideshowTemplateTarget.appendChild(slideshowContent);
 	setDebugStatus('waiting for new image to slide in');
 	await nextEventFirePromise(slideshowContent, 'animationend');
-	setDebugStatus(`showing this image for ${TIME_PER_IMAGE_MS/1000} seconds`);
-	setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	clearDebugStatus();
+
+	if(currentImage.type === 'image') setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	else if(currentImage.type === 'video') {
+		slideshowMedia.classList.add('imperceptible_jitter');
+		slideshowMedia.loop = false;
+		await slideshowMedia.play();
+		slideshowMedia.addEventListener('ended', function onended(e){
+			slideshowMedia.classList.remove('imperceptible_jitter');
+			// slideshowMedia.currentTime = 0;
+			// slideshowMedia.play();
+			// setDebugStatus(e.timeStamp);
+			slideshowMedia.removeEventListener('ended', onended);
+			nextImage();
+		});
+	}
+	else throw new Error('Unreachable State');
 
 	imagesListIndex++;
 	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
@@ -68,4 +98,4 @@ async function nextImage() {
 	imagesListIndex = 0;
 	console.log(imagesList);
 	nextImage();
-})()
+})();
