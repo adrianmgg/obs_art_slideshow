@@ -86,9 +86,6 @@ async function nextImage() {
 		await slideshowMedia.play();
 		slideshowMedia.addEventListener('ended', function onended(e){
 			slideshowMedia.classList.remove('imperceptible_jitter');
-			// slideshowMedia.currentTime = 0;
-			// slideshowMedia.play();
-			// setDebugStatus(e.timeStamp);
 			slideshowMedia.removeEventListener('ended', onended);
 			nextImage();
 		});
