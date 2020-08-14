@@ -30,12 +30,12 @@ async function nextImage() {
 	let slideshowImage = templateInstance.getElementsByClassName('slideshow_image')[0];
 	let slideshowArtistName = templateInstance.getElementsByClassName('slideshow_artist_name')[0];
 
-	slideshowArtistName.innerText = 'a'.repeat(Math.random()*16+1);
+	slideshowArtistName.innerText = imagesList[imagesListIndex].artist;
 	let aspectRatio = Math.random()*2;
 	let width = Math.random() * 1000 + 16;
 	let height = width * aspectRatio;
 
-	slideshowImage.src = `https://picsum.photos/${Math.floor(width)}/${Math.floor(height)}`
+	slideshowImage.src = imagesList[imagesListIndex].path;
 	
 	debugStatusElement.innerText = 'waiting for next image to load';
 	await nextEventFirePromise(slideshowImage, 'load');
@@ -60,6 +60,8 @@ async function nextImage() {
 	debugStatusElement.innerText = `showing this image for ${TIME_PER_IMAGE_MS/1000} seconds`;
 	setTimeout(nextImage, TIME_PER_IMAGE_MS);
 
+	imagesListIndex++;
+	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
 	lastImageContent = slideshowContent;
 }
 

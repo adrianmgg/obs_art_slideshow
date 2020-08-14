@@ -69,13 +69,15 @@
 }
 
 @keyframes slide_in_anim {
-	0%   { transform: translateX(-400px); }
+	/* -600px here is kinda arbitrary, ideally it would be dynamic based on how wide the thing we're animating is */
+	/* for now just set it to something high (or rather low since it's negative) enough it can push everything off screen */
+	0%   { transform: translateX(-600px); }
 	100% { transform: translateX(0px); }
 }
 .slide_in {
-	animation: slide_in_anim 2s ease-in-out;
+	animation: slide_in_anim 2s ease-out;
 }
 .slide_out {
-	animation: slide_in_anim 2s ease-in-out reverse;
+	animation: slide_in_anim 2s ease-out reverse;
 	animation-fill-mode: forwards;
 }
