@@ -4,9 +4,16 @@ const template = document.getElementById('slideshow_template');
 const slideshowTemplateTarget = document.getElementById('slideshow_template_target');
 const debugStatusElement = document.getElementById('debug_status');
 
-
 let imagesList;
 let imagesListIndex;
+
+class SlideshowEntry {
+	constructor({path, artist, type='image'}) {
+		this.path = path;
+		this.artist = artist;
+		this.type = type;
+	}
+}
 
 function setDebugStatus(msg){
 	debugStatusElement.innerText = msg;
@@ -94,7 +101,7 @@ async function nextImage() {
 }
 
 (async function main(){
-	imagesList = await fetch('images.json').then(response=>response.json());
+	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
 	console.log(imagesList);
 	nextImage();
