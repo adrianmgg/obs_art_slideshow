@@ -8,55 +8,85 @@ const debugStatusElement = document.getElementById('debug_status');
 let imagesList;
 let imagesListIndex;
 
+function setDebugStatus(msg){
+	debugStatusElement.innerText = msg;
+}
+function clearDebugStatus(){
+	setDebugStatus('');
+};
+
 function nextEventFirePromise(target, eventType) {
 	return new Promise((resolve, reject) => {
 		function event(e) {
 			target.removeEventListener(eventType, event);
-			resolve(e);
+			target.removeEventListener('error', event);
+			if(e.type === 'error') reject(e);
+			else resolve(e);
 		}
 		target.addEventListener(eventType, event);
+		target.addEventListener('error', event);
 	});
 }
 
-// TODO wrap debug text display in function
-
 let lastImageContent = null;
 async function nextImage() {
+	let currentImage = imagesList[imagesListIndex];
+
 	let templateInstance = template.cloneNode(true);
 	// FIXME these are kinda ugly
-	let slideshowContent = templateInstance.getElementsByClassName('slideshow_content_inner')[0];
-	let slideshowImage = templateInstance.getElementsByClassName('slideshow_image')[0];
-	let slideshowArtistName = templateInstance.getElementsByClassName('slideshow_artist_name')[0];
+	let slideshowContent = templateInstance.getElementsByClassName('template_content_root')[0];
+	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
+	let mediaPlaceholder = templateInstance.getElementsByClassName('template_media_placeholder')[0];
+	let slideshowMedia;
+	if(currentImage.type === 'image') slideshowMedia = document.createElement('img');
+	else if(currentImage.type === 'video') slideshowMedia = document.createElement('video');
+	else throw new Error('Unreachable State');
+	slideshowMedia.classList.add('slideshow_image');
+	mediaPlaceholder.replaceWith(slideshowMedia);
 
-	slideshowArtistName.innerText = imagesList[imagesListIndex].artist;
-	let aspectRatio = Math.random()*2;
-	let width = Math.random() * 1000 + 16;
-	let height = width * aspectRatio;
-
-	slideshowImage.src = imagesList[imagesListIndex].path;
+	slideshowArtistName.innerText = currentImage.artist;
 	
-	debugStatusElement.innerText = 'waiting for next image to load';
-	await nextEventFirePromise(slideshowImage, 'load');
-	debugStatusElement.innerText = '';
+	if(currentImage.type === 'image') slideshowMedia.src = currentImage.path;
+	else if(currentImage.type === 'video') slideshowMedia.src = currentImage.path;
+	else throw new Error('Unreachable State');
+
+	setDebugStatus('waiting for next image to load');
+	if(currentImage.type === 'image') await nextEventFirePromise(slideshowMedia, 'load');
+	else if(currentImage.type === 'video') await nextEventFirePromise(slideshowMedia, 'loadeddata');
+	else throw new Error('Unreachable State');
+	clearDebugStatus();
 	
 	if(lastImageContent != null) {
 		lastImageContent.classList.remove('slide_in');
 		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
 		lastImageContent.classList.add('slide_out');
-		debugStatusElement.innerText = 'waiting for last image to slide out';
+		setDebugStatus('waiting for last image to slide out');
 		await nextEventFirePromise(lastImageContent, 'animationend');
-		debugStatusElement.innerText = '';
+		clearDebugStatus();
 		lastImageContent.parentElement.removeChild(lastImageContent);
-		// TODO properly delete after slide out is finished instead of hard-coding delay
-		// setTimeout(function(){this.parentElement.removeChild(this)}.bind(lastImageContent), 6000);
 	}
 	
 	slideshowContent.classList.add('slide_in');
 	slideshowTemplateTarget.appendChild(slideshowContent);
-	debugStatusElement.innerText = 'waiting for new image to slide in';
+	setDebugStatus('waiting for new image to slide in');
 	await nextEventFirePromise(slideshowContent, 'animationend');
-	debugStatusElement.innerText = `showing this image for ${TIME_PER_IMAGE_MS/1000} seconds`;
-	setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	clearDebugStatus();
+
+	if(currentImage.type === 'image') setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	else if(currentImage.type === 'video') {
+		slideshowMedia.classList.add('imperceptible_jitter');
+		slideshowMedia.loop = false;
+		await slideshowMedia.play();
+		slideshowMedia.addEventListener('ended', function onended(e){
+			slideshowMedia.classList.remove('imperceptible_jitter');
+			// slideshowMedia.currentTime = 0;
+			// slideshowMedia.play();
+			// setDebugStatus(e.timeStamp);
+			slideshowMedia.removeEventListener('ended', onended);
+			nextImage();
+		});
+	}
+	else throw new Error('Unreachable State');
 
 	imagesListIndex++;
 	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
@@ -68,4 +98,4 @@ async function nextImage() {
 	imagesListIndex = 0;
 	console.log(imagesList);
 	nextImage();
-})()
+})();
