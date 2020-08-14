@@ -8,6 +8,13 @@ const debugStatusElement = document.getElementById('debug_status');
 let imagesList;
 let imagesListIndex;
 
+function setDebugStatus(msg){
+	debugStatusElement.innerText = msg;
+}
+function clearDebugStatus(){
+	setDebugStatus('');
+};
+
 function nextEventFirePromise(target, eventType) {
 	return new Promise((resolve, reject) => {
 		function event(e) {
@@ -17,8 +24,6 @@ function nextEventFirePromise(target, eventType) {
 		target.addEventListener(eventType, event);
 	});
 }
-
-// TODO wrap debug text display in function
 
 let lastImageContent = null;
 async function nextImage() {
@@ -35,27 +40,25 @@ async function nextImage() {
 
 	slideshowImage.src = imagesList[imagesListIndex].path;
 	
-	debugStatusElement.innerText = 'waiting for next image to load';
+	setDebugStatus('waiting for next image to load');
 	await nextEventFirePromise(slideshowImage, 'load');
-	debugStatusElement.innerText = '';
+	clearDebugStatus();
 	
 	if(lastImageContent != null) {
 		lastImageContent.classList.remove('slide_in');
 		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
 		lastImageContent.classList.add('slide_out');
-		debugStatusElement.innerText = 'waiting for last image to slide out';
+		setDebugStatus('waiting for last image to slide out');
 		await nextEventFirePromise(lastImageContent, 'animationend');
-		debugStatusElement.innerText = '';
+		clearDebugStatus();
 		lastImageContent.parentElement.removeChild(lastImageContent);
-		// TODO properly delete after slide out is finished instead of hard-coding delay
-		// setTimeout(function(){this.parentElement.removeChild(this)}.bind(lastImageContent), 6000);
 	}
 	
 	slideshowContent.classList.add('slide_in');
 	slideshowTemplateTarget.appendChild(slideshowContent);
-	debugStatusElement.innerText = 'waiting for new image to slide in';
+	setDebugStatus('waiting for new image to slide in');
 	await nextEventFirePromise(slideshowContent, 'animationend');
-	debugStatusElement.innerText = `showing this image for ${TIME_PER_IMAGE_MS/1000} seconds`;
+	setDebugStatus(`showing this image for ${TIME_PER_IMAGE_MS/1000} seconds`);
 	setTimeout(nextImage, TIME_PER_IMAGE_MS);
 
 	imagesListIndex++;
