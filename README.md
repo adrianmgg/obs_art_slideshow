@@ -11,8 +11,14 @@
      - delete whatever's in the custom css field
      - I would suggest enabling 'shutdown source when not visible'
 
-### setting up images.json
-`images.json` contains the list of images/artist names the slideshow will display, see the built in `images.json` for an example.
+### example images.json
+```json
+[
+	{"path":"images/example.png", "artist":"somebody", "type":"image"},
+	{"path":"images/subfolder/example2.jpg", "artist":"somebody else", "type":"image"},
+	{"path":"images/video.webm", "artist":"another person", "type":"video"}
+]
+```
 
 ### changing the style
 currently, the only way to adjust the style is to manually edit `style.css`.
