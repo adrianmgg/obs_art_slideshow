@@ -24,9 +24,9 @@ let lastImageContent = null;
 async function nextImage() {
 	let templateInstance = template.cloneNode(true);
 	// FIXME these are kinda ugly
-	let slideshowContent = templateInstance.getElementsByClassName('slideshow_content_inner')[0];
-	let slideshowImage = templateInstance.getElementsByClassName('slideshow_image')[0];
-	let slideshowArtistName = templateInstance.getElementsByClassName('slideshow_artist_name')[0];
+	let slideshowContent = templateInstance.getElementsByClassName('template_content_root')[0];
+	let slideshowImage = templateInstance.getElementsByClassName('template_media')[0];
+	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
 
 	slideshowArtistName.innerText = imagesList[imagesListIndex].artist;
 	let aspectRatio = Math.random()*2;
