@@ -34,9 +34,6 @@ async function nextImage() {
 	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
 
 	slideshowArtistName.innerText = imagesList[imagesListIndex].artist;
-	let aspectRatio = Math.random()*2;
-	let width = Math.random() * 1000 + 16;
-	let height = width * aspectRatio;
 
 	slideshowImage.src = imagesList[imagesListIndex].path;
 	
