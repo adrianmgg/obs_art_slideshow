@@ -1,11 +1,12 @@
 const TIME_PER_IMAGE_MS = 6000;
 
-
 const template = document.getElementById('slideshow_template');
 const slideshowTemplateTarget = document.getElementById('slideshow_template_target');
 const debugStatusElement = document.getElementById('debug_status');
 
-let lastImageContent = null;
+
+let imagesList;
+let imagesListIndex;
 
 function nextEventFirePromise(target, eventType) {
 	return new Promise((resolve, reject) => {
@@ -21,6 +22,7 @@ function nextEventFirePromise(target, eventType) {
 // TODO add support for videos
 // TODO wrap debug text display in function
 
+let lastImageContent = null;
 async function nextImage() {
 	let templateInstance = template.cloneNode(true);
 	// FIXME these are kinda ugly
@@ -61,12 +63,9 @@ async function nextImage() {
 	lastImageContent = slideshowContent;
 }
 
-
-// let nextImageButton = document.createElement('button');
-// nextImageButton.innerText = 'next image';
-// nextImageButton.addEventListener('click', nextImage);
-// document.body.appendChild(nextImageButton);
-
-// nextImage();
-
-nextImage();
+(async function main(){
+	imagesList = await fetch('images.json').then(response=>response.json());
+	imagesListIndex = 0;
+	console.log(imagesList);
+	nextImage();
+})()
