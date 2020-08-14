@@ -13,3 +13,6 @@
 
 ### setting up images.json
 `images.json` contains the list of images/artist names the slideshow will display, see the built in `images.json` for an example.
+
+### changing the style
+currently, the only way to adjust the style is to manually edit `style.css`.
