@@ -61,8 +61,8 @@ async function nextImage() {
 	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
 	let mediaPlaceholder = templateInstance.getElementsByClassName('template_media_placeholder')[0];
 	
-	// mediaPlaceholder.replaceWith(currentImage.);
-	mediaPlaceholder.replaceWith(currentEntry.createMediaElement());
+	let slideshowMedia = currentEntry.createMediaElement();
+	mediaPlaceholder.replaceWith(slideshowMedia);
 
 	slideshowArtistName.innerText = currentEntry.artist;
 
