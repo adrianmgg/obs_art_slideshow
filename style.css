@@ -1,6 +1,6 @@
 #debug_status {
 /* 	comment/uncomment the next line to enable/disable */
-/* 	display: none; */
+	display: none;
 	z-index: 999;
 	font-family: monospace;
 	font-size: 16px;
