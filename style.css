@@ -75,9 +75,14 @@
 	100% { transform: translateX(0px); }
 }
 .slide_in {
-	animation: slide_in_anim 2s ease-out;
+	animation-name: slide_in_anim;
+	animation-duration: 2s;
+	animation-timing-function: ease-out;
 }
 .slide_out {
-	animation: slide_in_anim 2s ease-out reverse;
+	animation-name: slide_in_anim;
+	animation-duration: 2s;
+	animation-timing-function: ease-out;
+	animation-direction: reverse;
 	animation-fill-mode: forwards;
 }
