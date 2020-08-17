@@ -72,7 +72,6 @@ async function nextImage() {
 	
 	if(lastImageContent != null) {
 		lastImageContent.classList.remove('slideshow_idle');
-		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
 		lastImageContent.classList.add('slideshow_slide_out');
 		setDebugStatus('waiting for last image to slide out');
 		await nextEventFirePromise(lastImageContent, 'animationend');
@@ -110,6 +109,15 @@ async function nextImage() {
 	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
 	lastImageContent = slideshowContent;
 }
+
+
+const controlsPanel = document.getElementById('slideshow_controls');
+document.addEventListener('mouseenter', function(e) {
+	controlsPanel.classList.add('visible');
+});
+document.addEventListener('mouseleave', function(e) {
+	controlsPanel.classList.remove('visible');
+});
 
 (async function main(){
 	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));

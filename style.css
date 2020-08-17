@@ -109,3 +109,10 @@
 	animation-timing-function: linear;
 	animation-iteration-count: infinite;
 }
+
+#slideshow_controls {
+	display: none;
+}
+#slideshow_controls.visible {
+	display: unset;
+}
