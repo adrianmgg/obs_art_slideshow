@@ -11,14 +11,21 @@
      - delete whatever's in the custom css field
      - I would suggest enabling 'shutdown source when not visible'
 
-### example images.json
+### images.json
+#### documentation
+|key|description|valid values|mandatory|default|
+|-|-|-|-|-|
+|path|path to the file, relative to the root folder of the repository|string, must be a valid url|yes||
+|artist|artist's name for providing credit|any string|yes||
+|type|what type of file is it|"image" or "video"|no|"image"|
+
+#### example
 ```json
 [
 	{"path":"images/example.png", "artist":"somebody", "type":"image"},
-	{"path":"images/subfolder/example2.jpg", "artist":"somebody else", "type":"image"},
+	{"path":"images/subfolder/example2.jpg", "artist":"somebody else"},
 	{"path":"images/video.webm", "artist":"another person", "type":"video"}
 ]
 ```
-
 ### changing the style
 currently, the only way to adjust the style is to manually edit `style.css`.

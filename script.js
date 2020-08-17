@@ -4,9 +4,32 @@ const template = document.getElementById('slideshow_template');
 const slideshowTemplateTarget = document.getElementById('slideshow_template_target');
 const debugStatusElement = document.getElementById('debug_status');
 
-
+/** @type {Array<SlideshowEntry>} */
 let imagesList;
 let imagesListIndex;
+
+class SlideshowEntry {
+	constructor({path, artist, type='image'}) {
+		this.path = path;
+		this.artist = artist;
+		this.type = type;
+	}
+
+	createMediaElement() {
+		let ret;
+		if(this.type === 'image') {
+			ret = document.createElement('img');
+			ret.src = this.path;
+		}
+		else if(this.type === 'video') {
+			ret = document.createElement('video');
+			ret.src = this.path;
+		}
+		else throw new Error('Unreachable State');
+		ret.classList.add('slideshow_image');
+		return ret;
+	}
+}
 
 function setDebugStatus(msg){
 	debugStatusElement.innerText = msg;
@@ -30,29 +53,22 @@ function nextEventFirePromise(target, eventType) {
 
 let lastImageContent = null;
 async function nextImage() {
-	let currentImage = imagesList[imagesListIndex];
+	let currentEntry = imagesList[imagesListIndex];
 
 	let templateInstance = template.cloneNode(true);
 	// FIXME these are kinda ugly
 	let slideshowContent = templateInstance.getElementsByClassName('template_content_root')[0];
 	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
 	let mediaPlaceholder = templateInstance.getElementsByClassName('template_media_placeholder')[0];
-	let slideshowMedia;
-	if(currentImage.type === 'image') slideshowMedia = document.createElement('img');
-	else if(currentImage.type === 'video') slideshowMedia = document.createElement('video');
-	else throw new Error('Unreachable State');
-	slideshowMedia.classList.add('slideshow_image');
+	
+	let slideshowMedia = currentEntry.createMediaElement();
 	mediaPlaceholder.replaceWith(slideshowMedia);
 
-	slideshowArtistName.innerText = currentImage.artist;
-	
-	if(currentImage.type === 'image') slideshowMedia.src = currentImage.path;
-	else if(currentImage.type === 'video') slideshowMedia.src = currentImage.path;
-	else throw new Error('Unreachable State');
+	slideshowArtistName.innerText = currentEntry.artist;
 
 	setDebugStatus('waiting for next image to load');
-	if(currentImage.type === 'image') await nextEventFirePromise(slideshowMedia, 'load');
-	else if(currentImage.type === 'video') await nextEventFirePromise(slideshowMedia, 'loadeddata');
+	if(currentEntry.type === 'image') await nextEventFirePromise(slideshowMedia, 'load');
+	else if(currentEntry.type === 'video') await nextEventFirePromise(slideshowMedia, 'loadeddata');
 	else throw new Error('Unreachable State');
 	clearDebugStatus();
 	
@@ -72,16 +88,13 @@ async function nextImage() {
 	await nextEventFirePromise(slideshowContent, 'animationend');
 	clearDebugStatus();
 
-	if(currentImage.type === 'image') setTimeout(nextImage, TIME_PER_IMAGE_MS);
-	else if(currentImage.type === 'video') {
+	if(currentEntry.type === 'image') setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	else if(currentEntry.type === 'video') {
 		slideshowMedia.classList.add('imperceptible_jitter');
 		slideshowMedia.loop = false;
 		await slideshowMedia.play();
 		slideshowMedia.addEventListener('ended', function onended(e){
 			slideshowMedia.classList.remove('imperceptible_jitter');
-			// slideshowMedia.currentTime = 0;
-			// slideshowMedia.play();
-			// setDebugStatus(e.timeStamp);
 			slideshowMedia.removeEventListener('ended', onended);
 			nextImage();
 		});
@@ -94,7 +107,7 @@ async function nextImage() {
 }
 
 (async function main(){
-	imagesList = await fetch('images.json').then(response=>response.json());
+	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
 	console.log(imagesList);
 	nextImage();
