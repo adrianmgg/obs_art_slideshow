@@ -1,5 +1,3 @@
-const TIME_PER_IMAGE_MS = 6000;
-
 const template = document.getElementById('slideshow_template');
 const slideshowTemplateTarget = document.getElementById('slideshow_template_target');
 const debugStatusElement = document.getElementById('debug_status');
@@ -73,7 +71,7 @@ async function nextImage() {
 	clearDebugStatus();
 	
 	if(lastImageContent != null) {
-		lastImageContent.classList.remove('slide_in');
+		lastImageContent.classList.remove('idle');
 		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
 		lastImageContent.classList.add('slide_out');
 		setDebugStatus('waiting for last image to slide out');
@@ -88,7 +86,14 @@ async function nextImage() {
 	await nextEventFirePromise(slideshowContent, 'animationend');
 	clearDebugStatus();
 
-	if(currentEntry.type === 'image') setTimeout(nextImage, TIME_PER_IMAGE_MS);
+	if(currentEntry.type === 'image') {
+		slideshowContent.classList.remove('slide_in');
+		slideshowContent.classList.add('idle');
+		slideshowContent.addEventListener('animationend', function onAnimationEnd(e) {
+			slideshowMedia.removeEventListener('animationend', onAnimationEnd);
+			nextImage();
+		});
+	}
 	else if(currentEntry.type === 'video') {
 		slideshowMedia.classList.add('imperceptible_jitter');
 		slideshowMedia.loop = false;
