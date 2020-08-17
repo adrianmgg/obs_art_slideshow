@@ -87,6 +87,16 @@
 	animation-fill-mode: forwards;
 }
 
+@keyframes idle_anim {
+	0%   {}
+	100% {}
+}
+.idle {
+	animation-name: idle_anim;
+	animation-timing-function: linear;
+	animation-duration: 0s;
+}
+
 /* obs doesn't redraw the browser soruce often enough when a video is playing for whatever reason */
 /* so we need to do this */
 @keyframes imperceptible_jitter_anim {
@@ -95,7 +105,7 @@
 }
 .imperceptible_jitter {
 	animation-name: imperceptible_jitter_anim;
-	animation-duration: 0016.66666666s;
+	animation-duration: 1s;
 	animation-timing-function: linear;
 	animation-iteration-count: infinite;
 }
