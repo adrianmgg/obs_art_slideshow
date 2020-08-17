@@ -94,7 +94,7 @@
 .slideshow_idle {
 	animation-name: idle_anim;
 	animation-timing-function: linear;
-	animation-duration: 0s;
+	animation-duration: 6s;
 }
 
 /* obs doesn't redraw the browser soruce often enough when a video is playing for whatever reason */
