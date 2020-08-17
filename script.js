@@ -71,24 +71,24 @@ async function nextImage() {
 	clearDebugStatus();
 	
 	if(lastImageContent != null) {
-		lastImageContent.classList.remove('idle');
+		lastImageContent.classList.remove('slideshow_idle');
 		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
-		lastImageContent.classList.add('slide_out');
+		lastImageContent.classList.add('slideshow_slide_out');
 		setDebugStatus('waiting for last image to slide out');
 		await nextEventFirePromise(lastImageContent, 'animationend');
 		clearDebugStatus();
 		lastImageContent.parentElement.removeChild(lastImageContent);
 	}
 	
-	slideshowContent.classList.add('slide_in');
+	slideshowContent.classList.add('slideshow_slide_in');
 	slideshowTemplateTarget.appendChild(slideshowContent);
 	setDebugStatus('waiting for new image to slide in');
 	await nextEventFirePromise(slideshowContent, 'animationend');
 	clearDebugStatus();
 
 	if(currentEntry.type === 'image') {
-		slideshowContent.classList.remove('slide_in');
-		slideshowContent.classList.add('idle');
+		slideshowContent.classList.remove('slideshow_slide_in');
+		slideshowContent.classList.add('slideshow_idle');
 		slideshowContent.addEventListener('animationend', function onAnimationEnd(e) {
 			slideshowMedia.removeEventListener('animationend', onAnimationEnd);
 			nextImage();

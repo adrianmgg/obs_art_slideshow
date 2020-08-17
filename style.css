@@ -74,12 +74,12 @@
 	0%   { transform: translateX(-600px); }
 	100% { transform: translateX(0px); }
 }
-.slide_in {
+.slideshow_slide_in {
 	animation-name: slide_in_anim;
 	animation-duration: 2s;
 	animation-timing-function: ease-out;
 }
-.slide_out {
+.slideshow_slide_out {
 	animation-name: slide_in_anim;
 	animation-duration: 2s;
 	animation-timing-function: ease-out;
@@ -91,7 +91,7 @@
 	0%   {}
 	100% {}
 }
-.idle {
+.slideshow_idle {
 	animation-name: idle_anim;
 	animation-timing-function: linear;
 	animation-duration: 0s;
