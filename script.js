@@ -122,6 +122,7 @@ document.addEventListener('mouseleave', function(e) {
 (async function main(){
 	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
-	console.log(imagesList);
+	let templateContents = await fetch('theme/slideshow_template.html').then(response=>response.text());
+	template.innerHTML = templateContents;
 	nextImage();
 })();
