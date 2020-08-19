@@ -1,5 +1,4 @@
-## Instructions
-### installation/obs setup
+## installation/obs setup
  1. download this repository
  2. download [node.js](https://nodejs.org/)
  3. download [http-server](https://www.npmjs.com/package/http-server)
@@ -10,15 +9,15 @@
      - delete whatever's in the custom css field
      - I would suggest enabling 'shutdown source when not visible'
 
-### images.json
-#### documentation
+## images.json
+### documentation
 |key|description|valid values|mandatory|default|
 |-|-|-|-|-|
 |path|path to the file, relative to the root folder of the repository|string, must be a valid url|yes||
 |artist|artist's name for providing credit|any string|yes||
 |type|what type of file is it|"image" or "video"|no|"image"|
 
-#### example
+### example
 ```json
 [
 	{"path":"images/example.png", "artist":"somebody", "type":"image"},
@@ -26,5 +25,3 @@
 	{"path":"images/video.webm", "artist":"another person", "type":"video"}
 ]
 ```
-### changing the style
-currently, the only way to adjust the style is to manually edit `style.css`.
