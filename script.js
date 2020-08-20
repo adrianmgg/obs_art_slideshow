@@ -120,17 +120,20 @@ document.addEventListener('mouseleave', function(e) {
 });
 
 (async function main(){
+	const urlParams = (new URL(window.location)).searchParams;
+	if(!urlParams.has('theme')) throw new Error('theme not specified');
+	let themePath = `themes/${urlParams.get('theme')}`;
 	// load images list
 	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
 	// load template
-	let templateContents = await fetch('theme/slideshow_template.html').then(response=>response.text());
+	let templateContents = await fetch(`${themePath}/slideshow_template.html`).then(response=>response.text());
 	template.innerHTML = templateContents;
 	// load theme stylesheet
 	let templateStylesheet = document.createElement('link');
 	document.head.appendChild(templateStylesheet);
 	templateStylesheet.rel = 'stylesheet';
-	templateStylesheet.href = './theme/slideshow_theme.css';
+	templateStylesheet.href = `${themePath}/slideshow_theme.css`;
 	await nextEventFirePromise(templateStylesheet, 'load');
 	// start slideshow
 	nextImage();
