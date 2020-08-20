@@ -31,6 +31,14 @@
 	margin-left: 400px;
 } */
 
+.slideshow_template_instance_wrapper {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100vw;
+	height: 100vh;
+}
+
 /* obs doesn't redraw the browser soruce often enough when a video is playing for whatever reason */
 /* so we need to do this */
 @keyframes imperceptible_jitter_anim {

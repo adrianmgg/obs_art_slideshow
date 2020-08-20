@@ -1,5 +1,5 @@
 const template = document.getElementById('slideshow_template');
-const slideshowTemplateTarget = document.getElementById('slideshow_template_target');
+const slideshowContainer = document.getElementById('slideshow_container');
 const debugStatusElement = document.getElementById('debug_status');
 
 /** @type {Array<SlideshowEntry>} */
@@ -8,23 +8,106 @@ let imagesListIndex;
 
 class SlideshowEntry {
 	constructor({path, artist, type='image'}) {
+		if(type != 'image' && type != 'video') throw new Error(`invalid slideshow entry type "${type}"`);
 		this.path = path;
 		this.artist = artist;
 		this.type = type;
 	}
 
-	createMediaElement() {
-		let ret;
-		if(this.type === 'image') {
-			ret = document.createElement('img');
-			ret.src = this.path;
+	createInstance() {
+		return new SlideshowEntryInstance(this);
+	}
+}
+
+class SlideshowEntryInstance {
+	constructor(entry) {
+		this.entry = entry;  // FIXME give this a clearer name?
+	
+		this._lastAnimation = null;
+
+		let templateInstance = template.cloneNode(true);
+
+		// get certain elements from template
+		this.contentRoot = templateInstance.querySelector('[data-template-content-root]');
+		this.artistName = templateInstance.querySelector('[data-template-artist-name]');
+		let mediaPlaceholder = templateInstance.querySelector('[data-template-media-placeholder]');
+		this.animationTimingReference = templateInstance.querySelector('[data-template-animation-timing-reference]');
+		this.animationTargets = templateInstance.querySelectorAll('[data-template-animation-target]');
+		
+		// replace media placeholder with correct element
+		this.media = this._createMediaElement();
+		mediaPlaceholder.replaceWith(this.media);
+
+		// fill in artist name
+		this.artistName.innerText = this.entry.artist;
+		
+		if(this.entry.type === 'image') this.mediaReady = nextEventFirePromise(this.media, 'load');
+		else if(this.entry.type === 'video') this.mediaReady = nextEventFirePromise(this.media, 'loadeddata');
+		else throw new Error('Unreachable State');
+
+		this.wrapper = document.createElement('div');
+		this.wrapper.classList.add('slideshow_template_instance_wrapper');
+		this.wrapper.appendChild(this.contentRoot);
+		slideshowContainer.appendChild(this.wrapper);
+
+		/** @type {'INITIAL'|'ANIMATE_IN'|'IDLE'|'ANIMATE_OUT'} */
+		this.currentState = 'INITIAL';
+		this.wrapper.style.display = 'none';
+	}
+
+	animateIn() {
+		if(this.currentState != 'INITIAL') throw new Error(`invalid state "${this.currentState}"`);
+		this.currentState = 'ANIMATE_IN';
+		this.wrapper.style.display = 'unset';
+		return this._animateGeneric('slideshow_slide_in');
+	}
+	animateOut() {
+		if(this.currentState != 'IDLE') throw new Error(`invalid state "${this.currentState}"`);
+		this.currentState = 'ANIMATE_OUT';
+		return this._animateGeneric('slideshow_slide_out');
+	}
+
+	async idle() {
+		if(this.currentState != 'ANIMATE_IN') throw new Error(`invalid state "${this.currentState}"`);
+		this.currentState = 'IDLE';
+		if(this.entry.type === 'image') {
+			await this._animateGeneric('slideshow_idle');
 		}
-		else if(this.type === 'video') {
-			ret = document.createElement('video');
-			ret.src = this.path;
+		else if(this.entry.type === 'video') {
+			this.media.classList.add('imperceptible_jitter');
+			this.media.loop = false;
+			await this.media.play();
+			await nextEventFirePromise(this.media, 'ended');
+			this.media.classList.remove('imperceptible_jitter');
 		}
 		else throw new Error('Unreachable State');
-		ret.classList.add('slideshow_image');
+	}
+	
+	async _animateGeneric(className) {
+		for(let animationTarget of this.animationTargets) {
+			if(this._lastAnimation != null) animationTarget.classList.remove(this._lastAnimation);
+			animationTarget.classList.add(className);
+		}
+		this._lastAnimation = className;
+		await nextEventFirePromise(this.animationTimingReference, 'animationend');
+	}
+
+	destroy() {
+		this.wrapper.parentElement.removeChild(this.wrapper);
+	}
+
+	_createMediaElement() {
+		let ret;
+		if(this.entry.type === 'image') {
+			ret = document.createElement('img');
+			ret.src = this.entry.path;
+		}
+		else if(this.entry.type === 'video') {
+			ret = document.createElement('video');
+			ret.src = this.entry.path;
+		}
+		else throw new Error('Unreachable State');
+		ret.classList.add('slideshow_image');  // FIXME factor out implementation specific class
 		return ret;
 	}
 }
@@ -49,65 +132,27 @@ function nextEventFirePromise(target, eventType) {
 	});
 }
 
-let lastImageContent = null;
+let lastImage = null;
 async function nextImage() {
-	let currentEntry = imagesList[imagesListIndex];
-
-	let templateInstance = template.cloneNode(true);
-	// FIXME these are kinda ugly
-	let slideshowContent = templateInstance.getElementsByClassName('template_content_root')[0];
-	let slideshowArtistName = templateInstance.getElementsByClassName('template_artist_name')[0];
-	let mediaPlaceholder = templateInstance.getElementsByClassName('template_media_placeholder')[0];
+	let currentImage = imagesList[imagesListIndex].createInstance();
 	
-	let slideshowMedia = currentEntry.createMediaElement();
-	mediaPlaceholder.replaceWith(slideshowMedia);
+	await currentImage.mediaReady;
 
-	slideshowArtistName.innerText = currentEntry.artist;
+	if(lastImage != null) {
+		await lastImage.animateOut();
+		lastImage.destroy();
+		lastImage = null;
+	}
 
-	setDebugStatus('waiting for next image to load');
-	if(currentEntry.type === 'image') await nextEventFirePromise(slideshowMedia, 'load');
-	else if(currentEntry.type === 'video') await nextEventFirePromise(slideshowMedia, 'loadeddata');
-	else throw new Error('Unreachable State');
-	clearDebugStatus();
+	await currentImage.animateIn();
+
+	await currentImage.idle();
 	
-	if(lastImageContent != null) {
-		lastImageContent.classList.remove('slideshow_idle');
-		lastImageContent.classList.add('slideshow_slide_out');
-		setDebugStatus('waiting for last image to slide out');
-		await nextEventFirePromise(lastImageContent, 'animationend');
-		clearDebugStatus();
-		lastImageContent.parentElement.removeChild(lastImageContent);
-	}
-	
-	slideshowContent.classList.add('slideshow_slide_in');
-	slideshowTemplateTarget.appendChild(slideshowContent);
-	setDebugStatus('waiting for new image to slide in');
-	await nextEventFirePromise(slideshowContent, 'animationend');
-	clearDebugStatus();
-
-	if(currentEntry.type === 'image') {
-		slideshowContent.classList.remove('slideshow_slide_in');
-		slideshowContent.classList.add('slideshow_idle');
-		slideshowContent.addEventListener('animationend', function onAnimationEnd(e) {
-			slideshowMedia.removeEventListener('animationend', onAnimationEnd);
-			nextImage();
-		});
-	}
-	else if(currentEntry.type === 'video') {
-		slideshowMedia.classList.add('imperceptible_jitter');
-		slideshowMedia.loop = false;
-		await slideshowMedia.play();
-		slideshowMedia.addEventListener('ended', function onended(e){
-			slideshowMedia.classList.remove('imperceptible_jitter');
-			slideshowMedia.removeEventListener('ended', onended);
-			nextImage();
-		});
-	}
-	else throw new Error('Unreachable State');
-
 	imagesListIndex++;
 	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
-	lastImageContent = slideshowContent;
+	lastImage = currentImage;
+
+	setTimeout(nextImage, 0);
 }
 
 
