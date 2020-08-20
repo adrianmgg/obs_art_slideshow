@@ -71,24 +71,23 @@ async function nextImage() {
 	clearDebugStatus();
 	
 	if(lastImageContent != null) {
-		lastImageContent.classList.remove('idle');
-		void lastImageContent.offsetWidth; // https://css-tricks.com/restart-css-animation/
-		lastImageContent.classList.add('slide_out');
+		lastImageContent.classList.remove('slideshow_idle');
+		lastImageContent.classList.add('slideshow_slide_out');
 		setDebugStatus('waiting for last image to slide out');
 		await nextEventFirePromise(lastImageContent, 'animationend');
 		clearDebugStatus();
 		lastImageContent.parentElement.removeChild(lastImageContent);
 	}
 	
-	slideshowContent.classList.add('slide_in');
+	slideshowContent.classList.add('slideshow_slide_in');
 	slideshowTemplateTarget.appendChild(slideshowContent);
 	setDebugStatus('waiting for new image to slide in');
 	await nextEventFirePromise(slideshowContent, 'animationend');
 	clearDebugStatus();
 
 	if(currentEntry.type === 'image') {
-		slideshowContent.classList.remove('slide_in');
-		slideshowContent.classList.add('idle');
+		slideshowContent.classList.remove('slideshow_slide_in');
+		slideshowContent.classList.add('slideshow_idle');
 		slideshowContent.addEventListener('animationend', function onAnimationEnd(e) {
 			slideshowMedia.removeEventListener('animationend', onAnimationEnd);
 			nextImage();
@@ -111,9 +110,28 @@ async function nextImage() {
 	lastImageContent = slideshowContent;
 }
 
+
+const controlsPanel = document.getElementById('slideshow_controls');
+document.addEventListener('mouseenter', function(e) {
+	controlsPanel.classList.add('visible');
+});
+document.addEventListener('mouseleave', function(e) {
+	controlsPanel.classList.remove('visible');
+});
+
 (async function main(){
+	// load images list
 	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
-	console.log(imagesList);
+	// load template
+	let templateContents = await fetch('theme/slideshow_template.html').then(response=>response.text());
+	template.innerHTML = templateContents;
+	// load theme stylesheet
+	let templateStylesheet = document.createElement('link');
+	document.head.appendChild(templateStylesheet);
+	templateStylesheet.rel = 'stylesheet';
+	templateStylesheet.href = './theme/slideshow_theme.css';
+	await nextEventFirePromise(templateStylesheet, 'load');
+	// start slideshow
 	nextImage();
 })();
