@@ -169,17 +169,15 @@ document.addEventListener('mouseleave', function(e) {
 	if(!urlParams.has('theme')) throw new Error('theme not specified');
 	let themePath = `themes/${urlParams.get('theme')}`;
 	// load images list
-	imagesList = (await fetch('images.json').then(response=>response.json())).map(x=>new SlideshowEntry(x));
+	imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map(x=>new SlideshowEntry(x));
 	imagesListIndex = 0;
 	// load template
-	let templateContents = await fetch(`${themePath}/slideshow_template.html`).then(response=>response.text());
+	let templateContents = await fetch(`${themePath}/slideshow_template.html`, {cache: 'no-cache'}).then(response=>response.text());
 	template.innerHTML = templateContents;
 	// load theme stylesheet
-	let templateStylesheet = document.createElement('link');
+	let templateStylesheet = document.createElement('style');
 	document.head.appendChild(templateStylesheet);
-	templateStylesheet.rel = 'stylesheet';
-	templateStylesheet.href = `${themePath}/slideshow_theme.css`;
-	await nextEventFirePromise(templateStylesheet, 'load');
+	templateStylesheet.innerHTML = await fetch(`${themePath}/slideshow_theme.css`, {cache: 'no-cache'}).then(response=>response.text());
 	// start slideshow
 	nextImage();
 })();
