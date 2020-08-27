@@ -32,7 +32,6 @@ class SlideshowEntryInstance {
 		this.artistName = templateInstance.querySelector('[data-template-artist-name]');
 		let mediaPlaceholder = templateInstance.querySelector('[data-template-media-placeholder]');
 		this.animationTimingReference = templateInstance.querySelector('[data-template-animation-timing-reference]');
-		this.animationTargets = templateInstance.querySelectorAll('[data-template-animation-target]');
 		
 		// replace media placeholder with correct element
 		this.media = this._createMediaElement();
@@ -83,13 +82,18 @@ class SlideshowEntryInstance {
 		else throw new Error('Unreachable State');
 	}
 	
-	async _animateGeneric(className) {
-		for(let animationTarget of this.animationTargets) {
-			if(this._lastAnimation != null) animationTarget.classList.remove(this._lastAnimation);
-			animationTarget.classList.add(className);
-		}
+	_animateGeneric(className) {
+		if(this._lastAnimation != null) this.contentRoot.classList.remove(this._lastAnimation);
+		this.contentRoot.classList.add(className);
 		this._lastAnimation = className;
-		await nextEventFirePromise(this.animationTimingReference, 'animationend');
+		const animationTimingReference = this.animationTimingReference;
+		return new Promise(function(resolve, reject) {
+			function onAnimationEnd(e){
+				if(e.target == animationTimingReference) resolve();
+				else animationTimingReference.addEventListener(onAnimationEnd, {once: true, passive: true});
+			}
+			animationTimingReference.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
+		});
 	}
 
 	destroy() {
@@ -104,6 +108,7 @@ class SlideshowEntryInstance {
 		}
 		else if(this.entry.type === 'video') {
 			ret = document.createElement('video');
+			ret.muted = true;
 			ret.src = this.entry.path;
 		}
 		else throw new Error('Unreachable State');
