@@ -1,23 +1,35 @@
-const template = document.getElementById('slideshow_template');
-const slideshowContainer = document.getElementById('slideshow_container');
-const debugStatusElement = document.getElementById('debug_status');
+import { throwError, Nullable } from './util/misc';
 
-/** @type {Array<SlideshowEntry>} */
-let imagesList;
-let imagesListIndex;
+const template = document.getElementById('slideshow_template') || throwError('element not found');
+const slideshowContainer = document.getElementById('slideshow_container') || throwError('element not found');
 
-function throwError(message) { throw new Error(message); }
+let imagesList: Array<SlideshowEntry>;
+let imagesListIndex: number;
 
-function createSlideshowEntry(data) {
-	switch(data.type || 'image') {
-		case 'image': return new SlideshowImageEntry(data);
-		case 'video': return new SlideshowVideoEntry(data);
-		case 'group': return new SlideshowGroupEntry(data);
-		default: throw new Error(`invalid slideshow entry type "${this.type}"`);
-	}
+interface JSONDataImageEntry {
+	type?: 'image';
+	path: string;
+	artist: string;
+}
+interface JSONDataVideoEntry {
+	type: 'video';
+	path: string;
+	artist: string;
+}
+interface JSONDataGroupEntry {
+	type: 'group';
+	entries: Array<JSONDataImageEntry|JSONDataVideoEntry>;
+}
+type JSONDataEntry = JSONDataImageEntry | JSONDataVideoEntry | JSONDataGroupEntry;
+
+function createSlideshowEntry(data: JSONDataEntry) {
+	if(data.type === 'image' || !('type' in data)) return new SlideshowImageEntry(data);
+	else if(data.type === 'video') return new SlideshowVideoEntry(data);
+	else if(data.type === 'group') return new SlideshowGroupEntry(data);
+	else throw new Error(`invalid slideshow entry type "${data.type}"`);
 }
 
-class SlideshowEntry {
+abstract class SlideshowEntry {
 	constructor() {}
 
 	createInstance() {
@@ -25,16 +37,20 @@ class SlideshowEntry {
 	}
 }
 
-class SlideshowMediaEntry extends SlideshowEntry {
-	constructor(path, artist) {
+abstract class SlideshowMediaEntry extends SlideshowEntry {
+	path: string;
+	artist: string;
+	constructor(path: string, artist: string) {
 		super();
 		this.path = path;
 		this.artist = artist;
 	}
+
+	abstract _createMediaElement(): Element;
 }
 
 class SlideshowImageEntry extends SlideshowMediaEntry {
-	constructor(data) {
+	constructor(data: JSONDataImageEntry) {
 		super(data.path, data.artist);
 	}
 
@@ -46,7 +62,7 @@ class SlideshowImageEntry extends SlideshowMediaEntry {
 }
 
 class SlideshowVideoEntry extends SlideshowMediaEntry {
-	constructor(data) {
+	constructor(data: JSONDataVideoEntry) {
 		super(data.path, data.artist);
 	}
 
@@ -59,32 +75,43 @@ class SlideshowVideoEntry extends SlideshowMediaEntry {
 }
 
 class SlideshowGroupEntry extends SlideshowEntry {
-	constructor(data) {
+	children: Array<SlideshowEntry>;  // TODO this might need to just be SlideshowMediaEntry, depends on how groups end up getting implemented
+	constructor(data: JSONDataGroupEntry) {
 		super();
 		this.children = data.entries.map(createSlideshowEntry);
 	}
 }
 
 class SlideshowEntryInstance {
-	constructor(entry) {
+	entry: SlideshowEntry;
+	private _lastAnimation: string | null;
+	contentRoot: Element;
+	artistName: HTMLElement;
+	animationTimingReference: HTMLElement;
+	media: Element;
+	mediaReady: Promise<unknown>;
+	wrapper: HTMLElement;
+	currentState: 'INITIAL'|'ANIMATE_IN'|'IDLE'|'ANIMATE_OUT';  // TODO move this to an interface or typedef or smth?
+
+	constructor(entry: SlideshowEntry) {
 		this.entry = entry;  // FIXME give this a clearer name?
 	
 		this._lastAnimation = null;
 
-		let templateInstance = template.cloneNode(true);
-
+		let templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
+		
 		// get certain elements from template
-		this.contentRoot = templateInstance.querySelector('[data-template-content-root]');
-		this.artistName = templateInstance.querySelector('[data-template-artist-name]');
-		let mediaPlaceholder = templateInstance.querySelector('[data-template-media-placeholder]');
-		this.animationTimingReference = templateInstance.querySelector('[data-template-animation-timing-reference]');
+		this.contentRoot = templateInstance.querySelector<this['contentRoot']>('[data-template-content-root]') || throwError('element not found');
+		this.artistName = templateInstance.querySelector<this['artistName']>('[data-template-artist-name]') || throwError('element not found');
+		let mediaPlaceholder = templateInstance.querySelector<this['media']>('[data-template-media-placeholder]') || throwError('element not found');
+		this.animationTimingReference = templateInstance.querySelector<this['animationTimingReference']>('[data-template-animation-timing-reference]') || throwError('element not found');
 		
 		// replace media placeholder with correct element
 		this.media = this._createMediaElement();
 		mediaPlaceholder.replaceWith(this.media);
 
 		// fill in artist name
-		this.artistName.innerText = this.entry.artist;
+		this.artistName.innerText = (<SlideshowMediaEntry>this.entry).artist; // FIXME can remove cast after finished w/ refactor for groups implemented
 
 		// TODO factor to media type-specific classes
 		if(this.entry instanceof SlideshowImageEntry) this.mediaReady = nextEventFirePromise(this.media, 'load');
@@ -96,7 +123,6 @@ class SlideshowEntryInstance {
 		this.wrapper.appendChild(this.contentRoot);
 		slideshowContainer.appendChild(this.wrapper);
 
-		/** @type {'INITIAL'|'ANIMATE_IN'|'IDLE'|'ANIMATE_OUT'} */
 		this.currentState = 'INITIAL';
 		this.wrapper.style.display = 'none';
 	}
@@ -122,49 +148,42 @@ class SlideshowEntryInstance {
 		}
 		else if(this.entry instanceof SlideshowVideoEntry) {
 			this.media.classList.add('imperceptible_jitter');
-			this.media.loop = false;
-			await this.media.play();
+			(<HTMLVideoElement>this.media).loop = false;  // TODO remove these casts after refactor
+			await (<HTMLVideoElement>this.media).play();
 			await nextEventFirePromise(this.media, 'ended');
 			this.media.classList.remove('imperceptible_jitter');
 		}
 		else throw new Error('Unreachable State');
 	}
 	
-	_animateGeneric(className) {
+	_animateGeneric(className: string) {
 		if(this._lastAnimation != null) this.contentRoot.classList.remove(this._lastAnimation);
 		this.contentRoot.classList.add(className);
 		this._lastAnimation = className;
 		const animationTimingReference = this.animationTimingReference;
 		return new Promise(function(resolve, reject) {
-			function onAnimationEnd(e){
+			function onAnimationEnd(e: AnimationEvent){
 				if(e.target == animationTimingReference) resolve();
-				else animationTimingReference.addEventListener(onAnimationEnd, {once: true, passive: true});
+				else animationTimingReference.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
 			}
 			animationTimingReference.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
 		});
 	}
 
 	destroy() {
-		this.wrapper.parentElement.removeChild(this.wrapper);
+		(this.wrapper.parentElement || throwError()).removeChild(this.wrapper);
 	}
 
 	_createMediaElement() {
-		let ret = this.entry._createMediaElement();
+		let ret = (<SlideshowMediaEntry>this.entry)._createMediaElement();  // FIXME can remove cast after finished w/ refactor for groups implemented
 		ret.classList.add('slideshow_image');  // FIXME factor out implementation specific class
 		return ret;
 	}
 }
 
-function setDebugStatus(msg){
-	debugStatusElement.innerText = msg;
-}
-function clearDebugStatus(){
-	setDebugStatus('');
-};
-
-function nextEventFirePromise(target, eventType) {
+function nextEventFirePromise(target: Element, eventType: string) {
 	return new Promise((resolve, reject) => {
-		function event(e) {
+		function event(e: Event) {
 			target.removeEventListener(eventType, event);
 			target.removeEventListener('error', event);
 			if(e.type === 'error') reject(e);
@@ -175,7 +194,7 @@ function nextEventFirePromise(target, eventType) {
 	});
 }
 
-let lastImage = null;
+let lastImage: Nullable<SlideshowEntryInstance> = null;
 async function nextImage() {
 	let currentImage = imagesList[imagesListIndex].createInstance();
 	
@@ -199,7 +218,7 @@ async function nextImage() {
 }
 
 
-const controlsPanel = document.getElementById('slideshow_controls');
+const controlsPanel = document.getElementById('slideshow_controls') || throwError('element not found');
 document.addEventListener('mouseenter', function(e) {
 	controlsPanel.classList.add('visible');
 });
@@ -208,11 +227,11 @@ document.addEventListener('mouseleave', function(e) {
 });
 
 (async function main(){
-	const urlParams = (new URL(window.location)).searchParams;
+	const urlParams = (new URL(window.location.href)).searchParams;
 	if(!urlParams.has('theme')) throw new Error('theme not specified');
 	let themePath = `themes/${urlParams.get('theme')}`;
 	// load images list
-	imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map(x=>createSlideshowEntry(x));
+	imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map((x: JSONDataEntry)=>createSlideshowEntry(x));
 	imagesListIndex = 0;
 	// load template
 	let templateContents = await fetch(`${themePath}/slideshow_template.html`, {cache: 'no-cache'}).then(response=>response.text());
