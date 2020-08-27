@@ -6,16 +6,62 @@ const debugStatusElement = document.getElementById('debug_status');
 let imagesList;
 let imagesListIndex;
 
-class SlideshowEntry {
-	constructor({path, artist, type='image'}) {
-		if(type != 'image' && type != 'video') throw new Error(`invalid slideshow entry type "${type}"`);
-		this.path = path;
-		this.artist = artist;
-		this.type = type;
+function throwError(message) { throw new Error(message); }
+
+function createSlideshowEntry(data) {
+	switch(data.type || 'image') {
+		case 'image': return new SlideshowImageEntry(data);
+		case 'video': return new SlideshowVideoEntry(data);
+		case 'group': return new SlideshowGroupEntry(data);
+		default: throw new Error(`invalid slideshow entry type "${this.type}"`);
 	}
+}
+
+class SlideshowEntry {
+	constructor() {}
 
 	createInstance() {
 		return new SlideshowEntryInstance(this);
+	}
+}
+
+class SlideshowMediaEntry extends SlideshowEntry {
+	constructor(path, artist) {
+		super();
+		this.path = path;
+		this.artist = artist;
+	}
+}
+
+class SlideshowImageEntry extends SlideshowMediaEntry {
+	constructor(data) {
+		super(data.path, data.artist);
+	}
+
+	_createMediaElement() {
+		let ret = document.createElement('img');
+		ret.src = this.path;
+		return ret;
+	}
+}
+
+class SlideshowVideoEntry extends SlideshowMediaEntry {
+	constructor(data) {
+		super(data.path, data.artist);
+	}
+
+	_createMediaElement() {
+		let ret = document.createElement('video');
+		ret.muted = true;
+		ret.src = this.path;
+		return ret;
+	}
+}
+
+class SlideshowGroupEntry extends SlideshowEntry {
+	constructor(data) {
+		super();
+		this.children = data.entries.map(createSlideshowEntry);
 	}
 }
 
@@ -39,9 +85,10 @@ class SlideshowEntryInstance {
 
 		// fill in artist name
 		this.artistName.innerText = this.entry.artist;
-		
-		if(this.entry.type === 'image') this.mediaReady = nextEventFirePromise(this.media, 'load');
-		else if(this.entry.type === 'video') this.mediaReady = nextEventFirePromise(this.media, 'loadeddata');
+
+		// TODO factor to media type-specific classes
+		if(this.entry instanceof SlideshowImageEntry) this.mediaReady = nextEventFirePromise(this.media, 'load');
+		else if(this.entry instanceof SlideshowVideoEntry) this.mediaReady = nextEventFirePromise(this.media, 'loadeddata');
 		else throw new Error('Unreachable State');
 
 		this.wrapper = document.createElement('div');
@@ -69,10 +116,11 @@ class SlideshowEntryInstance {
 	async idle() {
 		if(this.currentState != 'ANIMATE_IN') throw new Error(`invalid state "${this.currentState}"`);
 		this.currentState = 'IDLE';
-		if(this.entry.type === 'image') {
+		// TODO factor to media type-specific classes
+		if(this.entry instanceof SlideshowImageEntry) {
 			await this._animateGeneric('slideshow_idle');
 		}
-		else if(this.entry.type === 'video') {
+		else if(this.entry instanceof SlideshowVideoEntry) {
 			this.media.classList.add('imperceptible_jitter');
 			this.media.loop = false;
 			await this.media.play();
@@ -101,17 +149,7 @@ class SlideshowEntryInstance {
 	}
 
 	_createMediaElement() {
-		let ret;
-		if(this.entry.type === 'image') {
-			ret = document.createElement('img');
-			ret.src = this.entry.path;
-		}
-		else if(this.entry.type === 'video') {
-			ret = document.createElement('video');
-			ret.muted = true;
-			ret.src = this.entry.path;
-		}
-		else throw new Error('Unreachable State');
+		let ret = this.entry._createMediaElement();
 		ret.classList.add('slideshow_image');  // FIXME factor out implementation specific class
 		return ret;
 	}
@@ -174,7 +212,7 @@ document.addEventListener('mouseleave', function(e) {
 	if(!urlParams.has('theme')) throw new Error('theme not specified');
 	let themePath = `themes/${urlParams.get('theme')}`;
 	// load images list
-	imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map(x=>new SlideshowEntry(x));
+	imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map(x=>createSlideshowEntry(x));
 	imagesListIndex = 0;
 	// load template
 	let templateContents = await fetch(`${themePath}/slideshow_template.html`, {cache: 'no-cache'}).then(response=>response.text());
