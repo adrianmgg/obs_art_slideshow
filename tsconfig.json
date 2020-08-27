@@ -2,7 +2,16 @@
 	"compilerOptions": {
 		"outDir": "./build",
 		"allowJs": false,
-		"target": "ES6"
+		"target": "ES6",
+		"noErrorTruncation": true,
+		"noImplicitReturns": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		// "noUnusedLocals": true,
+		// "noUnusedParameters": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true
 	},
 	"include": [
 		"./src/**/*"
