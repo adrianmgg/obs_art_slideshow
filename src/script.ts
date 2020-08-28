@@ -1,5 +1,3 @@
-import { throwError, Nullable } from './util/misc';
-
 const template = document.getElementById('slideshow_template') || throwError('element not found');
 const slideshowContainer = document.getElementById('slideshow_container') || throwError('element not found');
 
@@ -225,6 +223,13 @@ document.addEventListener('mouseenter', function(e) {
 document.addEventListener('mouseleave', function(e) {
 	controlsPanel.classList.remove('visible');
 });
+
+function throwError(message?: string): never {
+	if(message == null) throw new Error();
+	else throw new Error(message);
+}
+
+type Nullable<T> = T | null;
 
 (async function main(){
 	const urlParams = (new URL(window.location.href)).searchParams;
