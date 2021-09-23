@@ -4,7 +4,7 @@
 		"outFile": "./build/script.js",
 		"allowJs": false,
 		"target": "ES2017",
-		"module": "None",
+		"module": "none",
 		"noErrorTruncation": true,
 		"noImplicitReturns": true,
 		"noImplicitAny": true,
@@ -15,5 +15,8 @@
 		"strictFunctionTypes": true,
 		"strictPropertyInitialization": true
 	},
-	"files": [ "./src/script.ts" ]
+	//"files": [ "./src/script.ts" ]
+	"include": [
+		"src/**/*.ts"
+	]
 }
