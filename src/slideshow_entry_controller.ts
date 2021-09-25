@@ -1,11 +1,9 @@
 class SlideshowEntryController {
 	mediaElement: SlideshowMediaElement;
 	private _lastAnimation: string | null;
-	contentRoot: Element;
+	contentRoot: HTMLElement;
 	artistName: HTMLElement;
-	animationTimingReference: HTMLElement;
 	wrapper: HTMLElement;
-	currentState: 'INITIAL'|'ANIMATE_IN'|'IDLE'|'ANIMATE_OUT';  // TODO move this to an interface or typedef or smth?
 
 	constructor(entry: SlideshowEntryMetadata) {
 		this.mediaElement = entry.createMediaElement();  // FIXME give this a clearer name?
@@ -15,10 +13,10 @@ class SlideshowEntryController {
 		let templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
 		
 		// get certain elements from template
-		this.contentRoot = templateInstance.querySelector<this['contentRoot']>('[data-template-content-root]') || throwError('element not found');
-		this.artistName = templateInstance.querySelector<this['artistName']>('[data-template-artist-name]') || throwError('element not found');
-		this.animationTimingReference = templateInstance.querySelector<this['animationTimingReference']>('[data-template-animation-timing-reference]') || throwError('element not found');
-		let mediaPlaceholder = templateInstance.querySelector<Element>('[data-template-media-placeholder]') || throwError('element not found');
+		// TODO support multiple artist name elements?
+		this.contentRoot = templateInstance.querySelector<this['contentRoot']>('.slideshow_template_root') || throwError('no element found in template with class slideshow_template_root');
+		this.artistName = templateInstance.querySelector<this['artistName']>('.slideshow_artist_name') || throwError('no element found in template with class slideshow_artist_name');
+		let mediaPlaceholder = templateInstance.querySelector<Element>('.slideshow_media_placeholder') || throwError('no element found in template with class slideshow_media_placeholder');
 		
 		// replace media placeholder with correct element
 		mediaPlaceholder.replaceWith(this.mediaElement.element);
@@ -26,49 +24,54 @@ class SlideshowEntryController {
 		this.artistName.appendChild(this.mediaElement.artistNameDisplay);
 
 		this.wrapper = document.createElement('div');
-		this.wrapper.classList.add('slideshow_template_instance_wrapper');
 		this.wrapper.appendChild(this.contentRoot);
 		slideshowContainer.appendChild(this.wrapper);
 
-		this.currentState = 'INITIAL';
 		this.wrapper.style.display = 'none';
 	}
 
 	async animateIn() {
-		if(this.currentState != 'INITIAL') throw new Error(`invalid state "${this.currentState}"`);
-		this.currentState = 'ANIMATE_IN';
 		await this.mediaElement.isReady;
 		this.wrapper.style.display = 'unset';
-		await this._animateGeneric('slideshow_slide_in');
-	}
-	animateOut() {
-		if(this.currentState != 'IDLE') throw new Error(`invalid state "${this.currentState}"`);
-		this.currentState = 'ANIMATE_OUT';
-		return this._animateGeneric('slideshow_slide_out');
+		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_intro', themeConfig.introAnimation);
 	}
 
 	async idle() {
-		if(this.currentState != 'ANIMATE_IN') throw new Error(`invalid state "${this.currentState}"`);
-		this.currentState = 'IDLE';
+		this._switchCurrentPhaseClass('slideshow_idle');
 		await this.mediaElement.start();
 		await this.mediaElement.isFinished;
 	}
+
+	async animateOut() {
+		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_outro', themeConfig.outroAnimation);
+	}
 	
-	_animateGeneric(className: string) {
+	// FIXME give this a better name
+	async _switchCurrentPhaseClassAndMaybeAnimate(className: string, animationName: Nullable<string>) {
+		let animCompletePromise: Nullable<Promise<void>> = null;
+		if(animationName != null) animCompletePromise = this._awaitTemplateAnimationComplete(animationName);
+		this._switchCurrentPhaseClass(className);
+		if(animCompletePromise != null) await animCompletePromise;
+	}
+
+	_switchCurrentPhaseClass(className: string) {
 		if(this._lastAnimation != null) this.contentRoot.classList.remove(this._lastAnimation);
 		this.contentRoot.classList.add(className);
 		this._lastAnimation = className;
-		const animationTimingReference = this.animationTimingReference;
-		return new Promise<void>(function(resolve, reject) {
-			function onAnimationEnd(e: AnimationEvent){
-				if(e.target == animationTimingReference) resolve();
-				else animationTimingReference.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
+	}
+
+	_awaitTemplateAnimationComplete(animationName: string): Promise<void> {
+		const wrapper = this.wrapper;
+		return new Promise<void>(function(resolve, reject){
+			function onAnimationEnd(e: AnimationEvent) {
+				if(e.animationName === animationName) resolve();
+				else wrapper.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
 			}
-			animationTimingReference.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
+			wrapper.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
 		});
 	}
 
 	destroy() {
-		(this.wrapper.parentElement || throwError()).removeChild(this.wrapper);
+		this.wrapper.parentElement!.removeChild(this.wrapper);
 	}
 }

@@ -1,3 +1,5 @@
 {
-	"imageIdleTime": 2
+	"imageIdleTime": 2,
+	"introAnimation": "slide_in_anim",
+	"outroAnimation": "slide_out_anim"
 }
