@@ -7,7 +7,7 @@ class SlideshowEntryController {
 
 	constructor(entry: SlideshowEntryMetadata) {
 		this.mediaElement = entry.createMediaElement();  // FIXME give this a clearer name?
-	
+
 		this._lastAnimation = null;
 
 		let templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
@@ -28,22 +28,43 @@ class SlideshowEntryController {
 		slideshowContainer.appendChild(this.wrapper);
 
 		this.wrapper.style.display = 'none';
+
+		this.mediaElement.isReady.then(()=>{
+			this._dispatchCustomEvent('slideshow_media_loaded', {media: this.mediaElement.element});
+		});
+	}
+
+	async getReady() {  // TODO rename this
+		await this.mediaElement.isReady;
 	}
 
 	async animateIn() {
-		await this.mediaElement.isReady;
 		this.wrapper.style.display = 'unset';
+		this._dispatchPhaseEvent('intro');
 		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_intro', themeConfig.introAnimation);
 	}
 
 	async idle() {
+		this._dispatchPhaseEvent('idle');
 		this._switchCurrentPhaseClass('slideshow_idle');
 		await this.mediaElement.start();
 		await this.mediaElement.isFinished;
 	}
 
 	async animateOut() {
+		this._dispatchPhaseEvent('outro');
 		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_outro', themeConfig.outroAnimation);
+	}
+
+	_dispatchPhaseEvent(phase: string) {
+		this._dispatchCustomEvent('slideshow_phase', {phase: phase});
+	}
+
+	_dispatchCustomEvent<T> (eventName: string, detail: T) {
+		this.contentRoot.dispatchEvent(new CustomEvent<T>(eventName, {
+			bubbles: true,
+			detail: detail,
+		}));
 	}
 	
 	// FIXME give this a better name

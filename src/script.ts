@@ -16,6 +16,8 @@ async function nextImage() {
 		lastImage = null;
 	}
 
+	await currentImage.getReady();
+
 	await currentImage.animateIn();
 
 	await currentImage.idle();
@@ -52,6 +54,13 @@ document.addEventListener('mouseleave', function(e) {
 	let templateStylesheet = document.createElement('style');
 	document.head.appendChild(templateStylesheet);
 	templateStylesheet.innerHTML = await fetch(`${themePath}/slideshow_theme.css`, {cache: 'no-cache'}).then(response=>response.text());
+	// load theme script
+	let templateScriptContents = await fetch(`${themePath}/slideshow_script.js`, {cache: 'no-cache'}).then(response=>response.text());
+	if(templateScriptContents != null) {
+		let templateScript = document.createElement('script');
+		document.head.appendChild(templateScript);
+		templateScript.innerHTML = templateScriptContents;
+	}
 	// start slideshow
 	nextImage();
 })();

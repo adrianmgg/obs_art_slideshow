@@ -32,7 +32,7 @@
 @keyframes slide_in_anim {
 	/* -600px here is kinda arbitrary, ideally it would be dynamic based on how wide the thing we're animating is */
 	/* for now just set it to something high (or rather low since it's negative) enough it can push everything off screen */
-	0%   { transform: translateX(-600px); }
+	0%   { transform: translateX(var(--negative-width)); }
 	100% { transform: translateX(0px); }
 }
 .slideshow_intro .content-inner {
@@ -43,11 +43,12 @@
 
 @keyframes slide_out_anim {
 	0%   { transform: translateX(0px); }
-	100% { transform: translateX(-600px); }
+	80%  { transform: translateX(var(--negative-width)); }
+	100% { transform: translateX(var(--negative-width)); }
 }
 .slideshow_outro .content-inner {
 	animation-name: slide_out_anim;
-	animation-duration: 2s;
+	animation-duration: 2.5s;
 	animation-timing-function: ease-in;
 	animation-fill-mode: forwards;
 }
@@ -60,4 +61,5 @@
 	animation-name: idle_anim;
 	animation-timing-function: linear;
 	animation-duration: 6s;
+	animation-iteration-count: infinite;
 }
