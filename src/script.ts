@@ -31,10 +31,10 @@ async function nextImage() {
 
 
 const controlsPanel = document.getElementById('slideshow_controls') || throwError('element not found');
-document.addEventListener('mouseenter', function(e) {
+document.addEventListener('mouseenter', function() {
 	controlsPanel.classList.add('visible');
 });
-document.addEventListener('mouseleave', function(e) {
+document.addEventListener('mouseleave', function() {
 	controlsPanel.classList.remove('visible');
 });
 

@@ -24,7 +24,7 @@ class SlideshowMediaElementImage extends SlideshowMediaElement {
 		this.artistNameDisplay = document.createTextNode(metadata.artist);
 		this.element = document.createElement('img');
 		this.isReady = nextEventFirePromise(this.element, 'load', 'error');
-		this.isFinished = new Promise<void>((resolve, reject) => {
+		this.isFinished = new Promise<void>((resolve) => {
 			this.isFinishedResolve = resolve;
 		});
 		this.element.src = this.metadata.path;
@@ -81,14 +81,6 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 	}
 
 	private async _isFinished(): Promise<void> {
-		// while(this.childIndex < this.metadata.children.length) {
-		// 	await this.currentChild.isFinished;
-		// 	this.childIndex++;
-		// 	if(this.childIndex < this.metadata.children.length) break;
-		// 	await this.currentChild.isReady;
-		// 	this.updateChild(this.childIndex);
-		// 	await this.currentChild.start();
-		// }
 		await this.currentChild.isFinished;
 		for(this.childIndex = 1; this.childIndex < this.metadata.children.length; this.childIndex++) {
 			this.currentChild = this.metadata.children[this.childIndex].createMediaElement();
@@ -104,11 +96,5 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 
 	start(): Promise<any> {
 		return this.currentChild.start();
-	}
-
-	private updateChild(childIndex: number): void {
-		this.currentChild = this.metadata.children[this.childIndex].createMediaElement();
-		this.artistNameDisplay = this.currentChild.artistNameDisplay;
-		this.element = this.currentChild.element;
 	}
 }

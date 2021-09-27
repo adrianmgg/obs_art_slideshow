@@ -83,7 +83,7 @@ class SlideshowEntryController {
 
 	_awaitTemplateAnimationComplete(animationName: string): Promise<void> {
 		const wrapper = this.wrapper;
-		return new Promise<void>(function(resolve, reject){
+		return new Promise<void>(function(resolve){
 			function onAnimationEnd(e: AnimationEvent) {
 				if(e.animationName === animationName) resolve();
 				else wrapper.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
