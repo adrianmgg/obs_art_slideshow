@@ -54,7 +54,28 @@
 
 #slideshow_controls {
 	display: none;
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	top: 0px;
+	left: 0px;
 }
 #slideshow_controls.visible {
 	display: unset;
+}
+
+#errors_display {
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	top: 0px;
+	left: 0px;
+	pointer-events: none;
+}
+#errors_display_contents {
+	pointer-events: auto;
+	white-space: pre-wrap;
+	font-family: monospace;
+	color: #FF0000;
+	background-color: #000000;
 }

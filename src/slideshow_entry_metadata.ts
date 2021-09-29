@@ -1,13 +1,12 @@
-function createSlideshowEntryMetadata(data: JSONDataEntry) {
+function createSlideshowEntryMetadata(data: unknown): SlideshowEntryMetadata {
+	_assertIsJSONDataEntry(data);
 	if(data.type === 'image' || !('type' in data)) return new SlideshowImageEntryMetadata(data);
 	else if(data.type === 'video') return new SlideshowVideoEntryMetadata(data);
 	else if(data.type === 'group') return new SlideshowGroupEntryMetadata(data);
-	else throw new Error(`invalid slideshow entry type "${data.type}"`);
+	else assert(false, 'should be unreachable');
 }
 
 abstract class SlideshowEntryMetadata {
-	constructor() {}
-
 	createInstance() {
 		return new SlideshowEntryController(this);
 	}

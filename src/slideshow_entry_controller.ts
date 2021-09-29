@@ -14,9 +14,9 @@ class SlideshowEntryController {
 		
 		// get certain elements from template
 		// TODO support multiple artist name elements?
-		this.contentRoot = templateInstance.querySelector<this['contentRoot']>('.slideshow_template_root') || throwError('no element found in template with class slideshow_template_root');
-		this.artistName = templateInstance.querySelector<this['artistName']>('.slideshow_artist_name') || throwError('no element found in template with class slideshow_artist_name');
-		let mediaPlaceholder = templateInstance.querySelector<Element>('.slideshow_media_placeholder') || throwError('no element found in template with class slideshow_media_placeholder');
+		this.contentRoot = querySelectorSafe<this['contentRoot']>(templateInstance, '.slideshow_template_root');
+		this.artistName = querySelectorSafe<this['artistName']>(templateInstance, '.slideshow_artist_name');
+		let mediaPlaceholder = querySelectorSafe<Element>(templateInstance, '.slideshow_media_placeholder');
 		
 		// replace media placeholder with correct element
 		mediaPlaceholder.replaceWith(this.mediaElement.element);
@@ -28,10 +28,6 @@ class SlideshowEntryController {
 		slideshowContainer.appendChild(this.wrapper);
 
 		this.wrapper.style.display = 'none';
-
-		this.mediaElement.isReady.then(()=>{
-			this._dispatchCustomEvent('slideshow_media_loaded', {media: this.mediaElement.element});
-		});
 	}
 
 	async getReady() {  // TODO rename this
@@ -93,6 +89,6 @@ class SlideshowEntryController {
 	}
 
 	destroy() {
-		this.wrapper.parentElement!.removeChild(this.wrapper);
+		this.wrapper.parentElement?.removeChild(this.wrapper);
 	}
 }
