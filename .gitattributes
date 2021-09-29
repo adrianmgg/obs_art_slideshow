@@ -1,0 +1,18 @@
+# automatic EOL conversion for anything not explicitly set later in this file
+*               text=auto
+
+# text files
+*.ts            text
+*.js            text
+*.html          text
+*.css           text
+*.md            text
+*.json          text
+*.py            text
+.eslintignore   text
+.gitignore      text
+.gitattributes  text
+LICENSE         text
+
+# binary files
+*.png           binary
