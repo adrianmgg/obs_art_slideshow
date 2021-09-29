@@ -119,6 +119,7 @@ module.exports = {
         }],
         '@typescript-eslint/semi': ['error', 'always'],
         '@typescript-eslint/return-await': ['error', 'always'], // require returned promises to be awaited, since it gives better stack traces for error handling
+        'linebreak-style': ['error', 'unix'],
         'no-var': ['error'],
     },
 };
