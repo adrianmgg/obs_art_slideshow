@@ -19,14 +19,99 @@ module.exports = {
         '@typescript-eslint/require-await': 'off',
         'no-prototype-builtins': 'off',
 
-        '@typescript-eslint/strict-boolean-expressions': [2, {
+        '@typescript-eslint/strict-boolean-expressions': ['error', {
             'allowString': false,
             'allowNumber': false,
-            'allowNullableObject': true, // true b/c currently using for || throwError stuff
+            'allowNullableObject': false,
             // ... rest are false by default
         }],
-        '@typescript-eslint/no-floating-promises': [2, {
+        '@typescript-eslint/no-floating-promises': ['error', {
             ignoreIIFE: true,
-        }]
+        }],
+
+        '@typescript-eslint/explicit-function-return-type': ['error',{
+            allowExpressions: true,
+        }],
+        '@typescript-eslint/member-delimiter-style': ['error', {
+            multiline: { delimiter: 'semi', requireLast: true },
+            multilineDetection: 'brackets',
+        }],
+        '@typescript-eslint/method-signature-style': ['error', 'property'],
+        '@typescript-eslint/naming-convention': ['error',{
+            selector: 'typeLike',
+            format: ['PascalCase'],
+        },{
+            selector: ['variableLike', 'memberLike', 'property', 'method'],
+            format: ['camelCase'],
+            leadingUnderscore: 'allow',
+        }],
+        '@typescript-eslint/no-base-to-string': ['error'],
+        '@typescript-eslint/no-confusing-non-null-assertion': ['error'],
+        '@typescript-eslint/no-confusing-void-expression': ['error'],
+        '@typescript-eslint/no-extraneous-class': ['error'],
+        '@typescript-eslint/no-implicit-any-catch': ['error'],
+        '@typescript-eslint/no-invalid-void-type': ['error'],
+        '@typescript-eslint/no-meaningless-void-operator': ['error'],
+        '@typescript-eslint/no-non-null-asserted-nullish-coalescing': ['error'],
+        '@typescript-eslint/no-parameter-properties': ['error'],
+        '@typescript-eslint/no-unnecessary-boolean-literal-compare': ['error'],
+        '@typescript-eslint/no-unnecessary-condition': ['error', {
+            allowConstantLoopConditions: true,
+        }],
+        '@typescript-eslint/no-unnecessary-type-constraint': ['error'],
+        '@typescript-eslint/no-unsafe-argument': ['error'],
+        '@typescript-eslint/non-nullable-type-assertion-style': ['error'],
+        '@typescript-eslint/prefer-for-of': ['error'],
+        '@typescript-eslint/prefer-includes': ['error'],
+        '@typescript-eslint/prefer-nullish-coalescing': ['error', {
+            ignoreConditionalTests: false,
+            ignoreMixedLogicalExpressions: false,
+        }],
+        '@typescript-eslint/prefer-optional-chain': ['error'],
+        '@typescript-eslint/prefer-readonly': ['error'],
+        // '@typescript-eslint/prefer-readonly-parameter-types': ['error'], // maybe later
+        '@typescript-eslint/prefer-reduce-type-parameter': ['error'],
+        '@typescript-eslint/prefer-return-this-type': ['error'],
+        '@typescript-eslint/prefer-string-starts-ends-with': ['error'],
+        '@typescript-eslint/prefer-ts-expect-error': ['error'],
+        '@typescript-eslint/require-array-sort-compare': ['error', {
+            ignoreStringArrays: true,
+        }],
+        '@typescript-eslint/switch-exhaustiveness-check': ['error'],
+        '@typescript-eslint/type-annotation-spacing': ['error', {
+            before: false,
+            after: true,
+            overrides: {
+                arrow: {
+                    before: true,
+                    after: true,
+                },
+            },
+        }],
+        '@typescript-eslint/unified-signatures': ['error'],
+        
+        '@typescript-eslint/brace-style': ['error', 'stroustrup'],
+        '@typescript-eslint/comma-dangle': ['error', 'always-multiline'],
+        '@typescript-eslint/comma-spacing': ['error', {before: false, after: true}],
+        '@typescript-eslint/default-param-last': ['error'],
+        '@typescript-eslint/dot-notation': ['error'],
+        '@typescript-eslint/func-call-spacing': ['error', 'never'],
+        '@typescript-eslint/indent': ['error', 'tab'],
+        '@typescript-eslint/keyword-spacing': ['error', {
+            before: true, after: true,
+            overrides: {
+                if: { after: false },
+                for: { after: false },
+            },
+        }],
+        '@typescript-eslint/no-dupe-class-members': ['error'],
+        '@typescript-eslint/no-extra-parens': ['off'],
+        
+        '@typescript-eslint/quotes': ['error', 'single', {
+            avoidEscape: true,
+            allowTemplateLiterals: true,
+        }],
+
+        'no-var': ['error'],
     },
 };

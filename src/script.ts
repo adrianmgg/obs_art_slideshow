@@ -8,7 +8,7 @@ let imagesListIndex: number;
 let lastImage: Nullable<SlideshowEntryController> = null;
 
 /** first stage of initialization, sets up stuff that just depends on the base index.html */
-function preInit() {
+function preInit(): void {
 	initGlobalErrorHandlers();
 	template = getElementByIdSafe('slideshow_template');
 	slideshowContainer = getElementByIdSafe('slideshow_container');
@@ -24,7 +24,7 @@ function preInit() {
 }
 
 /** second stage of initializaiton, sets up stuff that depends on outside files */
-async function init() {
+async function init(): Promise<void> {
 	const urlParams = (new URL(window.location.href)).searchParams;
 	let themeUrlParam = urlParams.get('theme');
 	if(themeUrlParam === null) throw new Error('theme not specified');
@@ -32,7 +32,7 @@ async function init() {
 	// load images list
 	// imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map((x: JSONDataEntry)=>createSlideshowEntryMetadata(x));
 	imagesList = await (async function(){
-		const response = await fetch('images.json', {cache: "no-cache"});
+		const response = await fetch('images.json', {cache: 'no-cache'});
 		assert(response.ok, 'images.json failed to load. is it missing?');
 		const responseData: unknown = await response.json();
 		assert(Array.isArray(responseData), 'outer level of images.json must be an array');
@@ -48,6 +48,7 @@ async function init() {
 		_assertIsJSONDataThemeConfig(responseData);
 		return responseData;
 	})();
+	// TODO improve error checking/reporting for these:
 	// load theme template html
 	let templateContents = await fetch(`${themePath}/slideshow_template.html`, {cache: 'no-cache'}).then(response=>response.text());
 	template.innerHTML = templateContents;
@@ -56,15 +57,12 @@ async function init() {
 	document.head.appendChild(templateStylesheet);
 	templateStylesheet.innerHTML = await fetch(`${themePath}/slideshow_theme.css`, {cache: 'no-cache'}).then(response=>response.text());
 	// load theme script
-	let templateScriptContents = await fetch(`${themePath}/slideshow_script.js`, {cache: 'no-cache'}).then(response=>response.text());
-	if(templateScriptContents != null) {
-		let templateScript = document.createElement('script');
-		document.head.appendChild(templateScript);
-		templateScript.innerHTML = templateScriptContents;
-	}
+	let templateScript = document.createElement('script');
+	document.head.appendChild(templateScript);
+	templateScript.innerHTML = await fetch(`${themePath}/slideshow_script.js`, {cache: 'no-cache'}).then(response=>response.text());
 }
 
-async function nextImage() {
+async function nextImage(): Promise<void> {
 	let currentImage = imagesList[imagesListIndex].createInstance();
 	
 	if(lastImage != null) {
@@ -86,7 +84,7 @@ async function nextImage() {
 	setTimeout(nextImage, 0);
 }
 
-async function main() {
+async function main(): Promise<void> {
 	preInit();
 	await init();
 	void nextImage();

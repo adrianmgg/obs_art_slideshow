@@ -1,13 +1,17 @@
+// need to do this one like this since the compiler wasn't quite able to figure it out implicitly from the check
+function _isJSONDataImageEntry(data: JSONDataEntry): data is JSONDataImageEntry {
+	return !('type' in data) || data.type === 'image';
+}
+ 
 function createSlideshowEntryMetadata(data: unknown): SlideshowEntryMetadata {
 	_assertIsJSONDataEntry(data);
-	if(data.type === 'image' || !('type' in data)) return new SlideshowImageEntryMetadata(data);
+	if(_isJSONDataImageEntry(data)) return new SlideshowImageEntryMetadata(data);
 	else if(data.type === 'video') return new SlideshowVideoEntryMetadata(data);
-	else if(data.type === 'group') return new SlideshowGroupEntryMetadata(data);
-	else assert(false, 'should be unreachable');
+	else return new SlideshowGroupEntryMetadata(data);
 }
 
 abstract class SlideshowEntryMetadata {
-	createInstance() {
+	createInstance(): SlideshowEntryController {
 		return new SlideshowEntryController(this);
 	}
 

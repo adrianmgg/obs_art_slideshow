@@ -29,7 +29,7 @@ type Nullable<T> = T | null;
 
 function nextEventFirePromise<T extends EventTarget>(target: T, eventType: string, errorEventType?: string): Promise<void> {
 	return new Promise((resolve, reject) => {
-		function event(e: Event) {
+		function event(e: Event): void {
 			target.removeEventListener(eventType, event);
 			if(errorEventType !== undefined) target.removeEventListener(errorEventType, event);
 			if(e.type === eventType) resolve();
@@ -47,7 +47,7 @@ function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unkn
 		ret += strings[i];
 		if(i < strings.length - 1) {
 			const expression = expressions[i];
-			if (expression instanceof Element) {
+			if(expression instanceof Element) {
 				// manual cast needed since cloneNode just returns Node
 				// shallow cloneNode + outerHTML since we want a string representation of JUST the node itself, not any of its children
 				ret += (expression.cloneNode(false) as typeof expression).outerHTML;
