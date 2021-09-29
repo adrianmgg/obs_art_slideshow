@@ -15,10 +15,10 @@ function preInit(): void {
 	controlsPanel = getElementByIdSafe('slideshow_controls');
 
 	// TODO probably move controls panel stuff to another file and/or a class
-	document.addEventListener('mouseenter', function() {
+	document.addEventListener('mouseenter', function () {
 		controlsPanel.classList.add('visible');
 	});
-	document.addEventListener('mouseleave', function() {
+	document.addEventListener('mouseleave', function () {
 		controlsPanel.classList.remove('visible');
 	});
 }
@@ -31,7 +31,7 @@ async function init(): Promise<void> {
 	let themePath = `themes/${themeUrlParam}`;
 	// load images list
 	// imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map((x: JSONDataEntry)=>createSlideshowEntryMetadata(x));
-	imagesList = await (async function(){
+	imagesList = await (async function (){
 		const response = await fetch('images.json', {cache: 'no-cache'});
 		assert(response.ok, 'images.json failed to load. is it missing?');
 		const responseData: unknown = await response.json();
@@ -41,7 +41,7 @@ async function init(): Promise<void> {
 	imagesListIndex = 0;
 	// load theme config
 	// themeConfig = await fetch(`${themePath}/theme_config.json`, {cache: 'no-cache'}).then(response=>response.json());
-	themeConfig = await (async function(){
+	themeConfig = await (async function (){
 		const response = await fetch(`${themePath}/theme_config.json`, {cache: 'no-cache'});
 		assert(response.ok, `theme config ("${themePath}/theme_config.json") failed to load. is it missing?`);
 		const responseData: unknown = await response.json();

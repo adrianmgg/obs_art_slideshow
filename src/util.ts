@@ -1,7 +1,7 @@
 class AssertionError extends Error {
 	constructor(description?: string | (() => string)) {
 		if(description === undefined) super('assertion failed (no description provided)');
-		else if(typeof description === 'function') super(`assertion failed: ${description()}`)
+		else if(typeof description === 'function') super(`assertion failed: ${description()}`);
 		else super(`assertion failed: ${description}`);
 	}
 }

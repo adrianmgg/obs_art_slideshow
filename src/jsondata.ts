@@ -10,7 +10,7 @@ interface JSONDataVideoEntry {
 }
 interface JSONDataGroupEntry {
 	type: 'group';
-	entries: Array<JSONDataImageEntry|JSONDataVideoEntry>;
+	entries: Array<JSONDataImageEntry | JSONDataVideoEntry>;
 }
 type JSONDataEntry = JSONDataImageEntry | JSONDataVideoEntry | JSONDataGroupEntry;
 

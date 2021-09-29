@@ -56,7 +56,7 @@ class SlideshowEntryController {
 		this._dispatchCustomEvent('slideshow_phase', {phase: phase});
 	}
 
-	_dispatchCustomEvent<T> (eventName: string, detail: T): void {
+	_dispatchCustomEvent<T>(eventName: string, detail: T): void {
 		this.contentRoot.dispatchEvent(new CustomEvent<T>(eventName, {
 			bubbles: true,
 			detail: detail,
@@ -79,7 +79,7 @@ class SlideshowEntryController {
 
 	_awaitTemplateAnimationComplete(animationName: string): Promise<void> {
 		const wrapper = this.wrapper;
-		return new Promise<void>(function(resolve){
+		return new Promise<void>(function (resolve){
 			function onAnimationEnd(e: AnimationEvent): void {
 				if(e.animationName === animationName) resolve();
 				else wrapper.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});

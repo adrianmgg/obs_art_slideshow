@@ -20,9 +20,9 @@ module.exports = {
         'no-prototype-builtins': 'off',
 
         '@typescript-eslint/strict-boolean-expressions': ['error', {
-            'allowString': false,
-            'allowNumber': false,
-            'allowNullableObject': false,
+            allowString: false,
+            allowNumber: false,
+            allowNullableObject: false,
             // ... rest are false by default
         }],
         '@typescript-eslint/no-floating-promises': ['error', {
@@ -30,7 +30,7 @@ module.exports = {
         }],
 
         '@typescript-eslint/explicit-function-return-type': ['error',{
-            allowExpressions: true,
+            allowExpressions: true, // TODO make this false
         }],
         '@typescript-eslint/member-delimiter-style': ['error', {
             multiline: { delimiter: 'semi', requireLast: true },
@@ -102,16 +102,23 @@ module.exports = {
             overrides: {
                 if: { after: false },
                 for: { after: false },
+                while: { after: false },
             },
         }],
         '@typescript-eslint/no-dupe-class-members': ['error'],
-        '@typescript-eslint/no-extra-parens': ['off'],
-        
+        '@typescript-eslint/no-extra-parens': ['off'], // TODO take a look at the options for this one, may want it enabled but with some parts allowed
         '@typescript-eslint/quotes': ['error', 'single', {
             avoidEscape: true,
-            allowTemplateLiterals: true,
+            allowTemplateLiterals: false,
         }],
-
+        '@typescript-eslint/space-infix-ops': ['error'],
+        '@typescript-eslint/space-before-function-paren': ['error', {
+            named: 'never',
+            anonymous: 'always',
+            asyncArrow: 'always',
+        }],
+        '@typescript-eslint/semi': ['error', 'always'],
+        '@typescript-eslint/return-await': ['error', 'always'], // require returned promises to be awaited, since it gives better stack traces for error handling
         'no-var': ['error'],
     },
 };
