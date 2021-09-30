@@ -15,7 +15,7 @@ module.exports = {
 	],
 	rules: {
 		'@typescript-eslint/no-unused-vars': 'off',
-		'prefer-const': 'off',
+		'prefer-const': 'error',
 		'@typescript-eslint/require-await': 'off',
 		'no-prototype-builtins': 'off',
 
@@ -30,7 +30,8 @@ module.exports = {
 		}],
 
 		'@typescript-eslint/explicit-function-return-type': ['error',{
-			allowExpressions: true, // TODO make this false
+			allowExpressions: false,
+			allowTypedFunctionExpressions: true,
 		}],
 		'@typescript-eslint/member-delimiter-style': ['error', {
 			multiline: { delimiter: 'semi', requireLast: true },
@@ -89,7 +90,6 @@ module.exports = {
 			},
 		}],
 		'@typescript-eslint/unified-signatures': 'error',
-		
 		'@typescript-eslint/brace-style': ['error', 'stroustrup'],
 		'@typescript-eslint/comma-dangle': ['error', 'always-multiline'],
 		'@typescript-eslint/comma-spacing': ['error', {before: false, after: true}],
@@ -119,6 +119,23 @@ module.exports = {
 		}],
 		'@typescript-eslint/semi': ['error', 'always'],
 		'@typescript-eslint/return-await': ['error', 'always'], // require returned promises to be awaited, since it gives better stack traces for error handling
+		'no-await-in-loop': 'error',
+		'@typescript-eslint/no-loss-of-precision': 'error',
+		'no-promise-executor-return': 'error',
+		'no-template-curly-in-string': 'error',
+		'no-unreachable-loop': 'error',
+		'require-atomic-updates': 'error',
+		'eqeqeq': 'error',
+		'no-constant-condition': ['error', { checkLoops: false }],
+		'arrow-body-style': ['error', 'as-needed'],
+		'arrow-parens': ['error', 'as-needed', { requireForBlockBody: true }],
+		// 'arrow-spacing': ['error', {before: true, after: true}],
+		'no-useless-computed-key': ['error', { enforceForClassMembers: true }],
+		'no-useless-rename': 'error',
+		'object-shorthand': ['error', 'methods'],
+		'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 1, maxBOF: 0 }],
+		'eol-last': 'error',
+		'prefer-numeric-literals': 'error',
 		'no-var': 'error',
 	},
 };

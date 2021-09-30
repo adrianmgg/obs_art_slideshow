@@ -5,7 +5,6 @@ let controlsPanel: HTMLElement;
 let themeConfig: JSONDataThemeConfig;
 let imagesList: Array<SlideshowEntryMetadata>; // TODO maybe factor these into an images list manager class? (might make implementing shuffle mode easier)
 let imagesListIndex: number;
-let lastImage: Nullable<SlideshowEntryController> = null;
 
 /** first stage of initialization, sets up stuff that just depends on the base index.html */
 function preInit(): void {
@@ -23,71 +22,91 @@ function preInit(): void {
 	});
 }
 
+// TODO move to another file
+async function _fetchSafeNocache(path: string, options?: RequestInit): Promise<Response> {
+	const response = await fetch(path, options);
+	assert(response.ok, templateFancyDefer`file ${path} failed to load (${response.status} ${response.statusText})`);
+	return response;
+}
+async function fetchTextSafe(path: string, options?: RequestInit): Promise<string> {
+	const response = await _fetchSafeNocache(path, options);
+	return await response.text();
+}
+async function fetchJSONSafe(path: string, options?: RequestInit): Promise<unknown> {
+	const response = await _fetchSafeNocache(path, options);
+	const responseData: unknown = await response.json();
+	return responseData;
+}
+
 /** second stage of initializaiton, sets up stuff that depends on outside files */
 async function init(): Promise<void> {
 	const urlParams = (new URL(window.location.href)).searchParams;
-	let themeUrlParam = urlParams.get('theme');
+	const themeUrlParam = urlParams.get('theme');
 	if(themeUrlParam === null) throw new Error('theme not specified');
-	let themePath = `themes/${themeUrlParam}`;
-	// load images list
-	// imagesList = (await fetch('images.json', {cache: 'no-cache'}).then(response=>response.json())).map((x: JSONDataEntry)=>createSlideshowEntryMetadata(x));
-	imagesList = await (async function (){
-		const response = await fetch('images.json', {cache: 'no-cache'});
-		assert(response.ok, 'images.json failed to load. is it missing?');
-		const responseData: unknown = await response.json();
-		assert(Array.isArray(responseData), 'outer level of images.json must be an array');
-		return responseData.map(createSlideshowEntryMetadata);
-	})();
-	imagesListIndex = 0;
-	// load theme config
-	// themeConfig = await fetch(`${themePath}/theme_config.json`, {cache: 'no-cache'}).then(response=>response.json());
-	themeConfig = await (async function (){
-		const response = await fetch(`${themePath}/theme_config.json`, {cache: 'no-cache'});
-		assert(response.ok, `theme config ("${themePath}/theme_config.json") failed to load. is it missing?`);
-		const responseData: unknown = await response.json();
-		_assertIsJSONDataThemeConfig(responseData);
-		return responseData;
-	})();
-	// TODO improve error checking/reporting for these:
-	// load theme template html
-	let templateContents = await fetch(`${themePath}/slideshow_template.html`, {cache: 'no-cache'}).then(response=>response.text());
-	template.innerHTML = templateContents;
-	// load theme stylesheet
-	let templateStylesheet = document.createElement('style');
-	document.head.appendChild(templateStylesheet);
-	templateStylesheet.innerHTML = await fetch(`${themePath}/slideshow_theme.css`, {cache: 'no-cache'}).then(response=>response.text());
-	// load theme script
-	let templateScript = document.createElement('script');
-	document.head.appendChild(templateScript);
-	templateScript.innerHTML = await fetch(`${themePath}/slideshow_script.js`, {cache: 'no-cache'}).then(response=>response.text());
+	const themePath = `themes/${themeUrlParam}`;
+
+	await Promise.all([
+		// load images list
+		async (): Promise<void> => {
+			const data = await fetchJSONSafe('images.json', {cache: 'no-cache'});
+			assert(Array.isArray(data));
+			imagesList = data.map(createSlideshowEntryMetadata);
+		},
+		// load theme config
+		async (): Promise<void> => {
+			const data = await fetchJSONSafe(`${themePath}/theme_config.json`, {cache: 'no-cache'});
+			_assertIsJSONDataThemeConfig(data);
+			themeConfig = data;
+		},
+		// load theme template html
+		async (): Promise<void> => {
+			template.innerHTML = await fetchTextSafe(`${themePath}/slideshow_template.html`, {cache: 'no-cache'});
+		},
+		// load theme stylesheet
+		async (): Promise<void> => {
+			const templateStylesheet = document.createElement('style');
+			document.head.appendChild(templateStylesheet);
+			templateStylesheet.innerHTML = await fetchTextSafe(`${themePath}/slideshow_theme.css`, {cache: 'no-cache'});
+		},
+		// load theme script
+		async (): Promise<void> => {
+			const templateScript = document.createElement('script');
+			document.head.appendChild(templateScript);
+			templateScript.innerHTML = await fetchTextSafe(`${themePath}/slideshow_script.js`, {cache: 'no-cache'});
+		},
+	]);
 }
 
-async function nextImage(): Promise<void> {
-	let currentImage = imagesList[imagesListIndex].createInstance();
-	
-	if(lastImage != null) {
-		await lastImage.animateOut();
-		lastImage.destroy();
-		lastImage = null;
-	}
-
-	await currentImage.getReady();
-
-	await currentImage.animateIn();
-
-	await currentImage.idle();
-	
+function getNextEntry(): SlideshowEntryMetadata {
+	const ret = imagesList[imagesListIndex];
 	imagesListIndex++;
 	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
-	lastImage = currentImage;
+	return ret;
+}
 
-	setTimeout(nextImage, 0);
+async function run(): Promise<never> {
+	let nextImage: SlideshowEntryController = getNextEntry().createInstance();
+	// we're displaying each image one at a time, so in this specific case we don't want to run these promises in parallel
+	/* eslint-disable no-await-in-loop */
+	while(true) {
+		// instance the entry after the current one as early as possible so they can load before we need them (if we did it right before it had to be displayed it would probably freeze for a bit)
+		const currentImage = nextImage;
+		nextImage = getNextEntry().createInstance();
+
+		// TODO maybe all these calls should just be handled by a SlideshowEntryController.run(): Promise<void> or something like that?
+		await currentImage.getReady();
+		await currentImage.animateIn();
+		await currentImage.idle();
+		await currentImage.animateOut();
+		currentImage.destroy();
+	}
+	/* eslint-enable no-await-in-loop */
 }
 
 async function main(): Promise<void> {
 	preInit();
 	await init();
-	void nextImage();
+	await run();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises

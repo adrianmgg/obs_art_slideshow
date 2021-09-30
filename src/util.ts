@@ -62,5 +62,5 @@ function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unkn
 }
 
 function templateFancyDefer(strings: TemplateStringsArray, ...expressions: Array<unknown>): () => ReturnType<typeof templateFancy> {
-	return () => templateFancy(strings, ...expressions);
+	return (): string => templateFancy(strings, ...expressions);
 }

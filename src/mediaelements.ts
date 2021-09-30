@@ -86,6 +86,8 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 
 	private async _isFinished(): Promise<void> {
 		await this.currentChild.isFinished;
+		// we specifically want to go through these one at a time
+		/* eslint-disable no-await-in-loop */
 		for(this.childIndex = 1; this.childIndex < this.metadata.children.length; this.childIndex++) {
 			this.currentChild = this.metadata.children[this.childIndex].createMediaElement();
 			await this.currentChild.isReady;  // TODO not sure if we'll need to add it to the document to get it to start loading, be sure to check this for images and videos
@@ -96,6 +98,7 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 			await this.currentChild.start();
 			await this.currentChild.isFinished;
 		}
+		/* eslint-enable no-await-in-loop */
 	}
 
 	start(): Promise<void> {

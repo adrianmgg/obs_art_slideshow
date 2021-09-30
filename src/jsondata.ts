@@ -32,7 +32,7 @@ function _assertIsJSONDataThemeConfig(data: any): asserts data is JSONDataThemeC
 	assert('imageIdleTime' in data, templateFancyDefer`while parsing theme config, expected "imageIdleTime" property but none found`);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	assert(typeof data.imageIdleTime === 'number', templateFancyDefer`while parsing theme config, expected imageIdleTime to be a number but found ${data.imageIdleTime}`);
-	for(let animKey of ['introAnimation', 'outroAnimation']) {
+	for(const animKey of ['introAnimation', 'outroAnimation']) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if(animKey in data) assert(typeof data[animKey] === 'string', templateFancyDefer`while parsing theme config, expected introAnimation to be a string but found ${data[animKey]}`);
 	}
