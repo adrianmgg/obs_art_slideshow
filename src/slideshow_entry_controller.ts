@@ -1,14 +1,12 @@
 class SlideshowEntryController {
 	mediaElement: SlideshowMediaElement;
-	private _lastAnimation: string | null;
+	private _lastAnimation: Nullable<string> = null;
 	contentRoot: HTMLElement;
 	artistName: HTMLElement;
 	wrapper: HTMLElement;
 
 	constructor(entry: SlideshowEntryMetadata) {
 		this.mediaElement = entry.createMediaElement();  // FIXME give this a clearer name?
-
-		this._lastAnimation = null;
 
 		const templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
 		
@@ -30,33 +28,37 @@ class SlideshowEntryController {
 		this.wrapper.style.display = 'none';
 	}
 
-	async getReady(): Promise<void> {  // TODO rename this
+	async run(): Promise<void> {
+		// wait for media to be loaded
 		await this.mediaElement.isReady;
-	}
-
-	async animateIn(): Promise<void> {
+		// media loaded event
+		// TODO groups should fire this (or maybe fire a different one, but they shouldnt do nothing)
+		this._dispatchCustomEvent('slideshow_media_loaded', {media: this.mediaElement.element});
+		
+		// intro
 		this.wrapper.style.display = 'unset';
 		this._dispatchPhaseEvent('intro');
 		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_intro', themeConfig.introAnimation);
-	}
 
-	async idle(): Promise<void> {
+		// idle
 		this._dispatchPhaseEvent('idle');
 		this._switchCurrentPhaseClass('slideshow_idle');
 		await this.mediaElement.start();
 		await this.mediaElement.isFinished;
-	}
 
-	async animateOut(): Promise<void> {
+		// outro
 		this._dispatchPhaseEvent('outro');
 		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_outro', themeConfig.outroAnimation);
+
+		// cleanup
+		this.wrapper.parentElement?.removeChild(this.wrapper);
 	}
 
-	_dispatchPhaseEvent(phase: string): void {
+	private _dispatchPhaseEvent(phase: string): void {
 		this._dispatchCustomEvent('slideshow_phase', {phase: phase});
 	}
 
-	_dispatchCustomEvent<T>(eventName: string, detail: T): void {
+	private _dispatchCustomEvent<T>(eventName: string, detail: T): void {
 		this.contentRoot.dispatchEvent(new CustomEvent<T>(eventName, {
 			bubbles: true,
 			detail: detail,
@@ -64,20 +66,20 @@ class SlideshowEntryController {
 	}
 	
 	// FIXME give this a better name
-	async _switchCurrentPhaseClassAndMaybeAnimate(className: string, animationName: Nullable<string>): Promise<void> {
+	private async _switchCurrentPhaseClassAndMaybeAnimate(className: string, animationName: Nullable<string>): Promise<void> {
 		let animCompletePromise: Nullable<Promise<void>> = null;
 		if(animationName !== null) animCompletePromise = this._awaitTemplateAnimationComplete(animationName);
 		this._switchCurrentPhaseClass(className);
 		if(animCompletePromise !== null) await animCompletePromise;
 	}
 
-	_switchCurrentPhaseClass(className: string): void {
+	private _switchCurrentPhaseClass(className: string): void {
 		if(this._lastAnimation !== null) this.contentRoot.classList.remove(this._lastAnimation);
 		this.contentRoot.classList.add(className);
 		this._lastAnimation = className;
 	}
 
-	_awaitTemplateAnimationComplete(animationName: string): Promise<void> {
+	private _awaitTemplateAnimationComplete(animationName: string): Promise<void> {
 		const wrapper = this.wrapper;
 		return new Promise<void>(function (resolve){
 			function onAnimationEnd(e: AnimationEvent): void {
@@ -86,9 +88,5 @@ class SlideshowEntryController {
 			}
 			wrapper.addEventListener('animationend', onAnimationEnd, {once: true, passive: true});
 		});
-	}
-
-	destroy(): void {
-		this.wrapper.parentElement?.removeChild(this.wrapper);
 	}
 }

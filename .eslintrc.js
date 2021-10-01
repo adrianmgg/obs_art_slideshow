@@ -16,7 +16,7 @@ module.exports = {
 	rules: {
 		'@typescript-eslint/no-unused-vars': 'off',
 		'prefer-const': 'error',
-		'@typescript-eslint/require-await': 'off',
+		'@typescript-eslint/require-await': 'error',
 		'no-prototype-builtins': 'off',
 
 		'@typescript-eslint/strict-boolean-expressions': ['error', {
@@ -39,12 +39,26 @@ module.exports = {
 		}],
 		'@typescript-eslint/method-signature-style': ['error', 'property'],
 		'@typescript-eslint/naming-convention': ['error',{
+			selector: 'default',
+			prefix: ['WARNING__NAMING_CONVENTION_LINT_FELL_THROUGH_TO_DEFAULT_CASE'],
+			format: ['UPPER_CASE'],
+		},{
 			selector: 'typeLike',
 			format: ['PascalCase'],
 		},{
-			selector: ['variableLike', 'memberLike', 'property', 'method'],
+			selector: ['variableLike'],
 			format: ['camelCase'],
 			leadingUnderscore: 'allow',
+		},{
+			selector: ['memberLike', 'property'],
+			format: ['camelCase'],
+			modifiers: ['public'],
+			leadingUnderscore: 'forbid',
+		},{
+			selector: ['memberLike', 'property'],
+			modifiers: ['private'],
+			format: ['camelCase'],
+			leadingUnderscore: 'require',
 		}],
 		'@typescript-eslint/no-base-to-string': 'error',
 		'@typescript-eslint/no-confusing-non-null-assertion': 'error',
@@ -106,7 +120,11 @@ module.exports = {
 			},
 		}],
 		'@typescript-eslint/no-dupe-class-members': 'error',
-		'@typescript-eslint/no-extra-parens': ['off'], // TODO take a look at the options for this one, may want it enabled but with some parts allowed
+		'@typescript-eslint/no-extra-parens': ['error', 'all', {
+			returnAssign: false,
+			nestedBinaryExpressions: false,
+			enforceForNewInMemberExpressions: false,
+		}],
 		'@typescript-eslint/quotes': ['error', 'single', {
 			avoidEscape: true,
 			allowTemplateLiterals: false,

@@ -64,3 +64,20 @@ function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unkn
 function templateFancyDefer(strings: TemplateStringsArray, ...expressions: Array<unknown>): () => ReturnType<typeof templateFancy> {
 	return (): string => templateFancy(strings, ...expressions);
 }
+
+async function _fetchSafeNocache(path: string, options?: RequestInit): Promise<Response> {
+	const response = await fetch(path, options);
+	assert(response.ok, templateFancyDefer`file ${path} failed to load (${response.status} ${response.statusText})`);
+	return response;
+}
+
+async function fetchTextSafe(path: string, options?: RequestInit): Promise<string> {
+	const response = await _fetchSafeNocache(path, options);
+	return await response.text();
+}
+
+async function fetchJSONSafe(path: string, options?: RequestInit): Promise<unknown> {
+	const response = await _fetchSafeNocache(path, options);
+	const responseData: unknown = await response.json();
+	return responseData;
+}

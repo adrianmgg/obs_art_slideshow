@@ -14,7 +14,7 @@ class SlideshowMediaElementImage extends SlideshowMediaElement {
 	metadata: SlideshowImageEntryMetadata;
 	isReady: Promise<void>;
 	isFinished: Promise<void>;
-	private isFinishedResolve!: () => void;
+	private _isFinishedResolve!: () => void;
 	element: HTMLImageElement;
 	artistNameDisplay: Text;
 
@@ -27,13 +27,14 @@ class SlideshowMediaElementImage extends SlideshowMediaElement {
 			throw new Error(templateFancy`failed to load image ${this.metadata.path}`);
 		});
 		this.isFinished = new Promise<void>((resolve) => {
-			this.isFinishedResolve = resolve;
+			this._isFinishedResolve = resolve;
 		});
 		this.element.src = this.metadata.path;
 	}
 
-	async start(): Promise<void> {
-		setTimeout(this.isFinishedResolve, themeConfig.imageIdleTime * 1000);
+	start(): Promise<void> {
+		setTimeout(this._isFinishedResolve, themeConfig.imageIdleTime * 1000);
+		return Promise.resolve();
 	}
 }
 
@@ -70,38 +71,38 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 	isFinished: Promise<void>;
 	element: Element;
 	artistNameDisplay: Text;
-	private childIndex: number;
-	private currentChild: SlideshowMediaElement;
+	private _childIndex: number;
+	private _currentChild: SlideshowMediaElement;
 
 	constructor(metadata: SlideshowGroupEntryMetadata) {
 		super();
 		this.metadata = metadata;
-		this.childIndex = 0;
-		this.currentChild = this.metadata.children[this.childIndex].createMediaElement();
-		this.element = this.currentChild.element;
-		this.artistNameDisplay = this.currentChild.artistNameDisplay;
-		this.isReady = this.currentChild.isReady;
+		this._childIndex = 0;
+		this._currentChild = this.metadata.children[this._childIndex].createMediaElement();
+		this.element = this._currentChild.element;
+		this.artistNameDisplay = this._currentChild.artistNameDisplay;
+		this.isReady = this._currentChild.isReady;
 		this.isFinished = this._isFinished();
 	}
 
 	private async _isFinished(): Promise<void> {
-		await this.currentChild.isFinished;
+		await this._currentChild.isFinished;
 		// we specifically want to go through these one at a time
 		/* eslint-disable no-await-in-loop */
-		for(this.childIndex = 1; this.childIndex < this.metadata.children.length; this.childIndex++) {
-			this.currentChild = this.metadata.children[this.childIndex].createMediaElement();
-			await this.currentChild.isReady;  // TODO not sure if we'll need to add it to the document to get it to start loading, be sure to check this for images and videos
-			this.artistNameDisplay.replaceWith(this.currentChild.artistNameDisplay);
-			this.artistNameDisplay = this.currentChild.artistNameDisplay;
-			this.element.replaceWith(this.currentChild.element);
-			this.element = this.currentChild.element;
-			await this.currentChild.start();
-			await this.currentChild.isFinished;
+		for(this._childIndex = 1; this._childIndex < this.metadata.children.length; this._childIndex++) {
+			this._currentChild = this.metadata.children[this._childIndex].createMediaElement();
+			await this._currentChild.isReady;
+			this.artistNameDisplay.replaceWith(this._currentChild.artistNameDisplay);
+			this.artistNameDisplay = this._currentChild.artistNameDisplay;
+			this.element.replaceWith(this._currentChild.element);
+			this.element = this._currentChild.element;
+			await this._currentChild.start();
+			await this._currentChild.isFinished;
 		}
 		/* eslint-enable no-await-in-loop */
 	}
 
 	start(): Promise<void> {
-		return this.currentChild.start();
+		return this._currentChild.start();
 	}
 }

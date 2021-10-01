@@ -49,7 +49,7 @@ class SlideshowVideoEntryMetadata extends SlideshowMediaEntryMetadata {
 }
 
 class SlideshowGroupEntryMetadata extends SlideshowEntryMetadata {
-	children: Array<SlideshowEntryMetadata>;  // TODO this might need to just be SlideshowMediaEntry, depends on how groups end up getting implemented
+	children: Array<SlideshowEntryMetadata>;
 	constructor(data: JSONDataGroupEntry) {
 		super();
 		this.children = data.entries.map(createSlideshowEntryMetadata);
