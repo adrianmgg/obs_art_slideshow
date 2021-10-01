@@ -23,8 +23,7 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"strictBindCallApply": true,
 		"useUnknownInCatchVariables": true,
-
-		"noUncheckedIndexedAccess": false,
+		"noUncheckedIndexedAccess": true,
 	},
 	//"files": [ "./src/script.ts" ]
 	"include": [

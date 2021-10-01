@@ -18,6 +18,8 @@ module.exports = {
 		'prefer-const': 'error',
 		'@typescript-eslint/require-await': 'error',
 		'no-prototype-builtins': 'off',
+		'@typescript-eslint/no-inferrable-types': 'off',
+		'@typescript-eslint/no-non-null-assertion': 'off',
 
 		'@typescript-eslint/strict-boolean-expressions': ['error', {
 			allowString: false,
@@ -147,7 +149,7 @@ module.exports = {
 		'no-constant-condition': ['error', { checkLoops: false }],
 		'arrow-body-style': ['error', 'as-needed'],
 		'arrow-parens': ['error', 'as-needed', { requireForBlockBody: true }],
-		// 'arrow-spacing': ['error', {before: true, after: true}],
+		'arrow-spacing': ['error', {before: true, after: true}],
 		'no-useless-computed-key': ['error', { enforceForClassMembers: true }],
 		'no-useless-rename': 'error',
 		'object-shorthand': ['error', 'methods'],

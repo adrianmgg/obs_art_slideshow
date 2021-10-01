@@ -3,8 +3,7 @@ let slideshowContainer: HTMLElement;
 let controlsPanel: HTMLElement;
 
 let themeConfig: JSONDataThemeConfig;
-let imagesList: Array<SlideshowEntryMetadata>; // TODO maybe factor these into an images list manager class? (might make implementing shuffle mode easier)
-let imagesListIndex = 0;
+let entriesManager: SlideshowEntryManager;
 
 /** first stage of initialization, sets up stuff that just depends on the base index.html */
 function preInit(): void {
@@ -26,15 +25,16 @@ function preInit(): void {
 async function init(): Promise<void> {
 	const urlParams = (new URL(window.location.href)).searchParams;
 	const themeUrlParam = urlParams.get('theme');
-	if(themeUrlParam === null) throw new Error('theme not specified');
+	assert(themeUrlParam !== null, 'theme not specified');
 	const themePath = `themes/${themeUrlParam}`;
+	const entriesManagerClass = getEntriesManagerClass(urlParams.get('entries_manager'));
 
 	await Promise.all([
 		// load images list
 		(async function loadImagesList(): Promise<void> {
 			const data = await fetchJSONSafe('images.json', {cache: 'no-cache'});
 			assert(Array.isArray(data));
-			imagesList = data.map(createSlideshowEntryMetadata);
+			entriesManager = new entriesManagerClass(data.map(createSlideshowEntryMetadata));
 		})(),
 		// load theme config
 		(async function loadThemeConfig(): Promise<void> {
@@ -61,21 +61,14 @@ async function init(): Promise<void> {
 	]);
 }
 
-function getNextEntry(): SlideshowEntryMetadata {
-	const ret = imagesList[imagesListIndex];
-	imagesListIndex++;
-	if(imagesListIndex >= imagesList.length) imagesListIndex = 0;
-	return ret;
-}
-
 async function run(): Promise<never> {
-	let nextImage: SlideshowEntryController = getNextEntry().createInstance();
+	let nextImage: SlideshowEntryController = entriesManager.nextEntry().createInstance();
 	// we're displaying each image one at a time, so in this specific case we don't want to run these promises in parallel
 	/* eslint-disable no-await-in-loop */
 	while(true) {
 		const currentImage = nextImage;
 		// instance the next image before running the current one, to give it more time to load
-		nextImage = getNextEntry().createInstance();
+		nextImage = entriesManager.nextEntry().createInstance();
 		await currentImage.run();
 	}
 	/* eslint-enable no-await-in-loop */

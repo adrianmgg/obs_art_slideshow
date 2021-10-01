@@ -81,3 +81,7 @@ async function fetchJSONSafe(path: string, options?: RequestInit): Promise<unkno
 	const responseData: unknown = await response.json();
 	return responseData;
 }
+
+function randomIntBetween(min: number, max: number): number {
+	return Math.floor(Math.random() * (max - min + 1)) + min; 
+}
