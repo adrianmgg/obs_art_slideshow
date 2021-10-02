@@ -5,13 +5,12 @@ let controlsPanel: HTMLElement;
 let themeConfig: JSONDataThemeConfig;
 let entriesManager: SlideshowEntryManager;
 
-/** first stage of initialization, sets up stuff that just depends on the base index.html */
-function preInit(): void {
+async function init(): Promise<void> {
 	initGlobalErrorHandlers();
 	template = getElementByIdSafe('slideshow_template');
 	slideshowContainer = getElementByIdSafe('slideshow_container');
 	controlsPanel = getElementByIdSafe('slideshow_controls');
-
+	
 	// TODO probably move controls panel stuff to another file and/or a class
 	document.addEventListener('mouseenter', function () {
 		controlsPanel.classList.add('visible');
@@ -19,10 +18,7 @@ function preInit(): void {
 	document.addEventListener('mouseleave', function () {
 		controlsPanel.classList.remove('visible');
 	});
-}
 
-/** second stage of initializaiton, sets up stuff that depends on outside files */
-async function init(): Promise<void> {
 	const urlParams = (new URL(window.location.href)).searchParams;
 	const themeUrlParam = urlParams.get('theme');
 	assert(themeUrlParam !== null, 'theme not specified');
@@ -75,7 +71,6 @@ async function run(): Promise<never> {
 }
 
 async function main(): Promise<void> {
-	preInit();
 	await init();
 	await run();
 }

@@ -6,8 +6,6 @@ class SlideshowEntryController {
 	wrapper: HTMLElement;
 
 	constructor(entry: SlideshowEntryMetadata) {
-		this.mediaElement = entry.createMediaElement();  // FIXME give this a clearer name?
-
 		const templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
 		
 		// get certain elements from template
@@ -15,6 +13,8 @@ class SlideshowEntryController {
 		this.contentRoot = querySelectorSafe<this['contentRoot']>(templateInstance, '.slideshow_template_root');
 		this.artistName = querySelectorSafe<this['artistName']>(templateInstance, '.slideshow_artist_name');
 		const mediaPlaceholder = querySelectorSafe<Element>(templateInstance, '.slideshow_media_placeholder');
+		
+		this.mediaElement = entry.createMediaElement(this.contentRoot);
 		
 		// replace media placeholder with correct element
 		mediaPlaceholder.replaceWith(this.mediaElement.element);
@@ -31,9 +31,6 @@ class SlideshowEntryController {
 	async run(): Promise<void> {
 		// wait for media to be loaded
 		await this.mediaElement.isReady;
-		// media loaded event
-		// TODO groups should fire this (or maybe fire a different one, but they shouldnt do nothing)
-		this._dispatchCustomEvent('slideshow_media_loaded', {media: this.mediaElement.element});
 		
 		// intro
 		this.wrapper.style.display = 'unset';
@@ -54,21 +51,14 @@ class SlideshowEntryController {
 		this.wrapper.parentElement?.removeChild(this.wrapper);
 	}
 
-	private _dispatchPhaseEvent(phase: string): void {
-		this._dispatchCustomEvent('slideshow_phase', {phase: phase});
-	}
-
-	private _dispatchCustomEvent<T>(eventName: string, detail: T): void {
-		this.contentRoot.dispatchEvent(new CustomEvent<T>(eventName, {
-			bubbles: true,
-			detail: detail,
-		}));
+	private _dispatchPhaseEvent(phase: SlideshowPhaseEvent['detail']['phase']): void {
+		dispatchCustomEvent(this.contentRoot, 'slideshowphase', {phase: phase});
 	}
 	
 	// FIXME give this a better name
-	private async _switchCurrentPhaseClassAndMaybeAnimate(className: string, animationName: Nullable<string>): Promise<void> {
+	private async _switchCurrentPhaseClassAndMaybeAnimate(className: string, animationName?: Nullable<string>): Promise<void> {
 		let animCompletePromise: Nullable<Promise<void>> = null;
-		if(animationName !== null) animCompletePromise = this._awaitTemplateAnimationComplete(animationName);
+		if(animationName !== null && animationName !== undefined) animCompletePromise = this._awaitTemplateAnimationComplete(animationName);
 		this._switchCurrentPhaseClass(className);
 		if(animCompletePromise !== null) await animCompletePromise;
 	}

@@ -15,7 +15,7 @@ abstract class SlideshowEntryMetadata {
 		return new SlideshowEntryController(this);
 	}
 
-	abstract createMediaElement(): SlideshowMediaElement;
+	abstract createMediaElement(eventTarget: EventTarget): SlideshowMediaElement;
 }
 
 abstract class SlideshowMediaEntryMetadata extends SlideshowEntryMetadata {
@@ -33,8 +33,8 @@ class SlideshowImageEntryMetadata extends SlideshowMediaEntryMetadata {
 		super(data.path, data.artist);
 	}
 
-	createMediaElement(): SlideshowMediaElementImage {
-		return new SlideshowMediaElementImage(this);
+	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementImage {
+		return new SlideshowMediaElementImage(this, eventTarget);
 	}
 }
 
@@ -43,8 +43,8 @@ class SlideshowVideoEntryMetadata extends SlideshowMediaEntryMetadata {
 		super(data.path, data.artist);
 	}
 
-	createMediaElement(): SlideshowMediaElementVideo {
-		return new SlideshowMediaElementVideo(this);
+	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementVideo {
+		return new SlideshowMediaElementVideo(this, eventTarget);
 	}
 }
 
@@ -55,7 +55,7 @@ class SlideshowGroupEntryMetadata extends SlideshowEntryMetadata {
 		this.children = data.entries.map(createSlideshowEntryMetadata);
 	}
 
-	createMediaElement(): SlideshowMediaElementGroup {
-		return new SlideshowMediaElementGroup(this);
+	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementGroup {
+		return new SlideshowMediaElementGroup(this, eventTarget);
 	}
 }

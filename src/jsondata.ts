@@ -19,9 +19,9 @@ interface JSONDataThemeConfig {
 	/** how long to idle for when displaying images (in seconds) */
 	imageIdleTime: number;
 	/** animation name for intro animtion, or null if no intro animation */
-	introAnimation: Nullable<string>;
+	introAnimation?: Nullable<string>;
 	/** animation name for outro animtion, or null if no outro animation */
-	outroAnimation: Nullable<string>;
+	outroAnimation?: Nullable<string>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,7 +34,7 @@ function _assertIsJSONDataThemeConfig(data: any): asserts data is JSONDataThemeC
 	assert(typeof data.imageIdleTime === 'number', templateFancyDefer`while parsing theme config, expected imageIdleTime to be a number but found ${data.imageIdleTime}`);
 	for(const animKey of ['introAnimation', 'outroAnimation']) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if(animKey in data) assert(typeof data[animKey] === 'string', templateFancyDefer`while parsing theme config, expected introAnimation to be a string but found ${data[animKey]}`);
+		if(animKey in data) assert(data[animKey] === null || typeof data[animKey] === 'string', templateFancyDefer`while parsing theme config, expected ${animKey} to be either null or a string but found ${data[animKey]}`);
 	}
 }
 

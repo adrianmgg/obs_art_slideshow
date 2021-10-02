@@ -18,12 +18,14 @@ class SlideshowMediaElementImage extends SlideshowMediaElement {
 	element: HTMLImageElement;
 	artistNameDisplay: Text;
 
-	constructor(metadata: SlideshowImageEntryMetadata) {
+	constructor(metadata: SlideshowImageEntryMetadata, eventTarget: EventTarget) {
 		super();
 		this.metadata = metadata;
 		this.artistNameDisplay = document.createTextNode(metadata.artist);
 		this.element = document.createElement('img');
-		this.isReady = nextEventFirePromise(this.element, 'load', 'error').catch(() => {
+		this.isReady = nextEventFirePromise(this.element, 'load', 'error').then(() => {
+			dispatchCustomEvent(eventTarget, 'slideshowmedialoaded', {media: this.element});
+		}).catch(() => {
 			throw new Error(templateFancy`failed to load image ${this.metadata.path}`);
 		});
 		this.isFinished = new Promise<void>((resolve) => {
@@ -45,12 +47,14 @@ class SlideshowMediaElementVideo extends SlideshowMediaElement {
 	element: HTMLVideoElement;
 	artistNameDisplay: Text;
 
-	constructor(metadata: SlideshowVideoEntryMetadata) {
+	constructor(metadata: SlideshowVideoEntryMetadata, eventTarget: EventTarget) {
 		super();
 		this.metadata = metadata;
 		this.artistNameDisplay = document.createTextNode(this.metadata.artist);
 		this.element = document.createElement('video');
-		this.isReady = nextEventFirePromise(this.element, 'loadeddata', 'error').catch(() => {
+		this.isReady = nextEventFirePromise(this.element, 'loadeddata', 'error').then(() => {
+			dispatchCustomEvent(eventTarget, 'slideshowmedialoaded', {media: this.element});
+		}).catch(() => {
 			throw new Error(templateFancy`failed to load video ${this.metadata.path}`);
 		});
 		this.isFinished = nextEventFirePromise(this.element, 'ended');
@@ -72,13 +76,15 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 	element: Element;
 	artistNameDisplay: Text;
 	private _currentChild: SlideshowMediaElement;
+	private readonly _eventTarget: EventTarget;
 
-	constructor(metadata: SlideshowGroupEntryMetadata) {
+	constructor(metadata: SlideshowGroupEntryMetadata, eventTarget: EventTarget) {
 		super();
 		this.metadata = metadata;
+		this._eventTarget = eventTarget;
 		const firstChildMeta = this.metadata.children[0];
 		assert(firstChildMeta !== undefined, "groups can't have zero children");
-		this._currentChild = firstChildMeta.createMediaElement();
+		this._currentChild = firstChildMeta.createMediaElement(this._eventTarget);
 		this.element = this._currentChild.element;
 		this.artistNameDisplay = this._currentChild.artistNameDisplay;
 		this.isReady = this._currentChild.isReady;
@@ -92,7 +98,7 @@ class SlideshowMediaElementGroup extends SlideshowMediaElement {
 		const children = this.metadata.children.values();
 		children.next(); // pass first element
 		for(const currentChildMeta of children) {
-			this._currentChild = currentChildMeta.createMediaElement();
+			this._currentChild = currentChildMeta.createMediaElement(this._eventTarget);
 			await this._currentChild.isReady;
 			this.artistNameDisplay.replaceWith(this._currentChild.artistNameDisplay);
 			this.artistNameDisplay = this._currentChild.artistNameDisplay;
