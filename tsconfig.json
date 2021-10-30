@@ -1,10 +1,11 @@
 {
 	"compilerOptions": {
-		// "outDir": "./build",
-		"outFile": "./build/script.js",
+		"outDir": "./build",
+		// "outFile": "./build/script.js",
 		"allowJs": false,
 		"target": "ES2017",
-		"module": "None",
+		// "module": "None",
+		"module": "ES6",
 		"noErrorTruncation": true,
 		"noImplicitReturns": true,
 		"noImplicitAny": true,
@@ -26,7 +27,7 @@
 		"noUncheckedIndexedAccess": true,
 	},
 	//"files": [ "./src/script.ts" ]
-	"include": [
-		"src/**/*.ts"
-	]
+	// "include": [
+	// 	"src/**/*.ts"
+	// ]
 }

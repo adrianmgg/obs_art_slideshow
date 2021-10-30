@@ -1,15 +1,27 @@
-class SlideshowEntryController {
+import { dispatchCustomEvent, SlideshowPhaseEvent } from './events.js';
+import { SlideshowMediaElement } from './mediaelements.js';
+import { SlideshowEntryMetadata } from './slideshow_entry_metadata.js';
+import { SlideshowTheme } from './slideshow_theme.js';
+import { Nullable, querySelectorSafe } from './util.js';
+
+export class SlideshowEntryController {
 	mediaElement: SlideshowMediaElement;
 	private _lastAnimation: Nullable<string> = null;
 	contentRoot: HTMLElement;
 	artistName: HTMLElement;
 	wrapper: HTMLElement;
+	private readonly theme: SlideshowTheme;
 
-	constructor(entry: SlideshowEntryMetadata) {
-		const templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
+	// TODO maybe add a root: DocumentOrShadowRoot param that this will populate? or maybe have it set that up itself and return it? idk
+	constructor(entry: SlideshowEntryMetadata, theme: SlideshowTheme) {
+		this.theme = theme;
+
+		// const templateInstance = <typeof template>template.cloneNode(true);  // we need to cast here b/c clonenode just returns a Node
+		const templateInstance = this.theme.instanceTemplate();
 		
 		// get certain elements from template
 		// TODO support multiple artist name elements?
+		// TODO the queryselector stuff can probably be in SlideshowTheme now
 		this.contentRoot = querySelectorSafe<this['contentRoot']>(templateInstance, '.slideshow_template_root');
 		this.artistName = querySelectorSafe<this['artistName']>(templateInstance, '.slideshow_artist_name');
 		const mediaPlaceholder = querySelectorSafe<Element>(templateInstance, '.slideshow_media_placeholder');
@@ -23,6 +35,7 @@ class SlideshowEntryController {
 
 		this.wrapper = document.createElement('div');
 		this.wrapper.appendChild(this.contentRoot);
+		// TODO outer script should handle this, not us
 		slideshowContainer.appendChild(this.wrapper);
 
 		this.wrapper.style.display = 'none';
@@ -35,7 +48,7 @@ class SlideshowEntryController {
 		// intro
 		this.wrapper.style.display = 'unset';
 		this._dispatchPhaseEvent('intro');
-		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_intro', themeConfig.introAnimation);
+		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_intro', this.theme.config.introAnimation);
 
 		// idle
 		this._dispatchPhaseEvent('idle');
@@ -45,7 +58,7 @@ class SlideshowEntryController {
 
 		// outro
 		this._dispatchPhaseEvent('outro');
-		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_outro', themeConfig.outroAnimation);
+		await this._switchCurrentPhaseClassAndMaybeAnimate('slideshow_outro', this.theme.config.outroAnimation);
 
 		// cleanup
 		this.wrapper.parentElement?.removeChild(this.wrapper);

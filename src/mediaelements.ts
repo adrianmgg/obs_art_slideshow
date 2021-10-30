@@ -1,4 +1,12 @@
-abstract class SlideshowMediaElement {
+import { dispatchCustomEvent } from './events.js';
+import { SlideshowEntryMetadata, SlideshowGroupEntryMetadata, SlideshowImageEntryMetadata, SlideshowVideoEntryMetadata } from './slideshow_entry_metadata.js';
+import { SlideshowTheme } from './slideshow_theme.js';
+import { assert, nextEventFirePromise, templateFancy } from './util.js';
+
+// TODO give the artist name display to the entry controller instead, media elements should ONLY be handling the media elements
+
+// TODO can maybe factor some behavior into this base class
+export abstract class SlideshowMediaElement {
 	abstract metadata: SlideshowEntryMetadata;
 	abstract isReady: Promise<void>;
 	abstract isFinished: Promise<void>;
@@ -10,16 +18,18 @@ abstract class SlideshowMediaElement {
 	abstract start(): Promise<void>;
 }
 
-class SlideshowMediaElementImage extends SlideshowMediaElement {
+export class SlideshowMediaElementImage extends SlideshowMediaElement {
 	metadata: SlideshowImageEntryMetadata;
 	isReady: Promise<void>;
 	isFinished: Promise<void>;
 	private _isFinishedResolve!: () => void;
 	element: HTMLImageElement;
 	artistNameDisplay: Text;
+	private readonly theme: SlideshowTheme;
 
-	constructor(metadata: SlideshowImageEntryMetadata, eventTarget: EventTarget) {
+	constructor(metadata: SlideshowImageEntryMetadata, eventTarget: EventTarget, theme: SlideshowTheme) {
 		super();
+		this.theme = theme;
 		this.metadata = metadata;
 		this.artistNameDisplay = document.createTextNode(metadata.artist);
 		this.element = document.createElement('img');
@@ -35,12 +45,12 @@ class SlideshowMediaElementImage extends SlideshowMediaElement {
 	}
 
 	start(): Promise<void> {
-		setTimeout(this._isFinishedResolve, themeConfig.imageIdleTime * 1000);
+		setTimeout(this._isFinishedResolve, this.theme.config.imageIdleTime * 1000);
 		return Promise.resolve();
 	}
 }
 
-class SlideshowMediaElementVideo extends SlideshowMediaElement {
+export class SlideshowMediaElementVideo extends SlideshowMediaElement {
 	metadata: SlideshowVideoEntryMetadata;
 	isReady: Promise<void>;
 	isFinished: Promise<void>;
@@ -69,48 +79,48 @@ class SlideshowMediaElementVideo extends SlideshowMediaElement {
 	}
 }
 
-class SlideshowMediaElementGroup extends SlideshowMediaElement {
+export class SlideshowMediaElementGroup extends SlideshowMediaElement {
 	metadata: SlideshowGroupEntryMetadata;
 	isReady: Promise<void>;
 	isFinished: Promise<void>;
 	element: Element;
 	artistNameDisplay: Text;
-	private _currentChild: SlideshowMediaElement;
-	private readonly _eventTarget: EventTarget;
+	private currentChild: SlideshowMediaElement;
+	private readonly eventTarget: EventTarget;
 
 	constructor(metadata: SlideshowGroupEntryMetadata, eventTarget: EventTarget) {
 		super();
 		this.metadata = metadata;
-		this._eventTarget = eventTarget;
+		this.eventTarget = eventTarget;
 		const firstChildMeta = this.metadata.children[0];
 		assert(firstChildMeta !== undefined, "groups can't have zero children");
-		this._currentChild = firstChildMeta.createMediaElement(this._eventTarget);
-		this.element = this._currentChild.element;
-		this.artistNameDisplay = this._currentChild.artistNameDisplay;
-		this.isReady = this._currentChild.isReady;
+		this.currentChild = firstChildMeta.createMediaElement(this.eventTarget);
+		this.element = this.currentChild.element;
+		this.artistNameDisplay = this.currentChild.artistNameDisplay;
+		this.isReady = this.currentChild.isReady;
 		this.isFinished = this._isFinished();
 	}
 
 	private async _isFinished(): Promise<void> {
-		await this._currentChild.isFinished;
+		await this.currentChild.isFinished;
 		// we specifically want to go through these one at a time
 		/* eslint-disable no-await-in-loop */
 		const children = this.metadata.children.values();
 		children.next(); // pass first element
 		for(const currentChildMeta of children) {
-			this._currentChild = currentChildMeta.createMediaElement(this._eventTarget);
-			await this._currentChild.isReady;
-			this.artistNameDisplay.replaceWith(this._currentChild.artistNameDisplay);
-			this.artistNameDisplay = this._currentChild.artistNameDisplay;
-			this.element.replaceWith(this._currentChild.element);
-			this.element = this._currentChild.element;
-			await this._currentChild.start();
-			await this._currentChild.isFinished;
+			this.currentChild = currentChildMeta.createMediaElement(this.eventTarget);
+			await this.currentChild.isReady;
+			this.artistNameDisplay.replaceWith(this.currentChild.artistNameDisplay);
+			this.artistNameDisplay = this.currentChild.artistNameDisplay;
+			this.element.replaceWith(this.currentChild.element);
+			this.element = this.currentChild.element;
+			await this.currentChild.start();
+			await this.currentChild.isFinished;
 		}
 		/* eslint-enable no-await-in-loop */
 	}
 
 	start(): Promise<void> {
-		return this._currentChild.start();
+		return this.currentChild.start();
 	}
 }

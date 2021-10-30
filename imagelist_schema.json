@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "credit": { "type": "string" },
+            "image": { "type": "string" },
+            "video": { "type": "string" },
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "image": { "type": "string" },
+                        "video": { "type": "string" }
+                    },
+                    "oneOf": [
+                        { "required": ["image"] },
+                        { "required": ["video"] }
+                    ],
+                    "additionalProperties": false,
+					"defaultSnippets": 	[
+						{
+							"label": "image",
+							"description": "TODO",
+							"_body": { "image": "$1" },
+							"body": "^{ \"image\": \"$1\" }"
+						},
+						{
+							"label": "video",
+							"description": "TODO",
+							"_body": { "video": "$1" },
+							"body": "^{ \"video\": \"$1\" }"
+						}
+					]
+                }
+            }
+        },
+        "required": [ "credit" ],
+        "oneOf": [
+            { "required": ["image"] },
+            { "required": ["video"] },
+            { "required": ["items"] }
+        ],
+        "additionalProperties": false,
+		"defaultSnippets": [
+			{
+				"label": "image",
+				"description": "TODO",
+				"_body": { "image": "$1", "credit": "$2" },
+				"body": "^{ \"image\": \"$1\", \"credit\": \"$2\" }"
+			},
+			{
+				"label": "group",
+				"description": "TODO",
+				"_body": { "items": "^[$1]", "credit": "$2" },
+				"body": "^{ \"items\": [\n\t$1\n], \"credit\": \"$2\" }"
+			},
+			{
+				"label": "video",
+				"description": "TODO",
+				"_body": { "video": "$1", "credit": "$2" },
+				"body": "^{ \"video\": \"$1\", \"credit\": \"$2\" }"
+			}
+		]
+    }
+}

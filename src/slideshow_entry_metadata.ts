@@ -1,24 +1,25 @@
+import { JSONDataEntry, JSONDataGroupEntry, JSONDataImageEntry, JSONDataVideoEntry, _assertIsJSONDataEntry } from './jsondata.js';
+import { SlideshowMediaElement, SlideshowMediaElementGroup, SlideshowMediaElementImage, SlideshowMediaElementVideo } from './mediaelements.js';
+import { SlideshowTheme } from './slideshow_theme.js';
+
 // need to do this one like this since the compiler wasn't quite able to figure it out implicitly from the check
-function _isJSONDataImageEntry(data: JSONDataEntry): data is JSONDataImageEntry {
+function isJSONDataImageEntry(data: JSONDataEntry): data is JSONDataImageEntry {
 	return !('type' in data) || data.type === 'image';
 }
  
-function createSlideshowEntryMetadata(data: unknown): SlideshowEntryMetadata {
+export function createSlideshowEntryMetadata(data: unknown): SlideshowEntryMetadata {
 	_assertIsJSONDataEntry(data);
-	if(_isJSONDataImageEntry(data)) return new SlideshowImageEntryMetadata(data);
+	if(isJSONDataImageEntry(data)) return new SlideshowImageEntryMetadata(data);
 	else if(data.type === 'video') return new SlideshowVideoEntryMetadata(data);
 	else return new SlideshowGroupEntryMetadata(data);
 }
 
-abstract class SlideshowEntryMetadata {
-	createInstance(): SlideshowEntryController {
-		return new SlideshowEntryController(this);
-	}
-
-	abstract createMediaElement(eventTarget: EventTarget): SlideshowMediaElement;
+// TODO should probably be an interface
+export abstract class SlideshowEntryMetadata {
+	abstract createMediaElement(eventTarget: EventTarget, theme: SlideshowTheme): SlideshowMediaElement;
 }
 
-abstract class SlideshowMediaEntryMetadata extends SlideshowEntryMetadata {
+export abstract class SlideshowMediaEntryMetadata extends SlideshowEntryMetadata {
 	path: string;
 	artist: string;
 	constructor(path: string, artist: string) {
@@ -28,34 +29,34 @@ abstract class SlideshowMediaEntryMetadata extends SlideshowEntryMetadata {
 	}
 }
 
-class SlideshowImageEntryMetadata extends SlideshowMediaEntryMetadata {
+export class SlideshowImageEntryMetadata extends SlideshowMediaEntryMetadata {
 	constructor(data: JSONDataImageEntry) {
 		super(data.path, data.artist);
 	}
 
-	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementImage {
-		return new SlideshowMediaElementImage(this, eventTarget);
+	createMediaElement(eventTarget: EventTarget, theme: SlideshowTheme): SlideshowMediaElementImage {
+		return new SlideshowMediaElementImage(this, eventTarget, theme);
 	}
 }
 
-class SlideshowVideoEntryMetadata extends SlideshowMediaEntryMetadata {
+export class SlideshowVideoEntryMetadata extends SlideshowMediaEntryMetadata {
 	constructor(data: JSONDataVideoEntry) {
 		super(data.path, data.artist);
 	}
 
-	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementVideo {
+	createMediaElement(eventTarget: EventTarget, _theme: SlideshowTheme): SlideshowMediaElementVideo {
 		return new SlideshowMediaElementVideo(this, eventTarget);
 	}
 }
 
-class SlideshowGroupEntryMetadata extends SlideshowEntryMetadata {
+export class SlideshowGroupEntryMetadata extends SlideshowEntryMetadata {
 	children: Array<SlideshowEntryMetadata>;
 	constructor(data: JSONDataGroupEntry) {
 		super();
 		this.children = data.entries.map(createSlideshowEntryMetadata);
 	}
 
-	createMediaElement(eventTarget: EventTarget): SlideshowMediaElementGroup {
-		return new SlideshowMediaElementGroup(this, eventTarget);
+	createMediaElement(eventTarget: EventTarget, theme: SlideshowTheme): SlideshowMediaElementGroup {
+		return new SlideshowMediaElementGroup(this, eventTarget, theme);
 	}
 }

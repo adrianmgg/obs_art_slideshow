@@ -1,10 +1,17 @@
+import { assert, randomIntBetween, templateFancyDefer } from './util.js';
+import { SlideshowEntryMetadata } from './slideshow_entry_metadata.js';
+
 interface SlideshowEntryManagerConstructor {
 	new (images: SlideshowEntryMetadata[]): SlideshowEntryManager;
 }
 
-abstract class SlideshowEntryManager {
+// TODO should rename these to make it more clear that they manage the overall list of entries, not just a single entry
+
+export abstract class SlideshowEntryManager { // TODO should probably be an interface
 	abstract nextEntry(): SlideshowEntryMetadata;
 }
+
+// TODO should these be classes?
 
 class SlideshowEntryManagerStandard extends SlideshowEntryManager {
 	private readonly _images: SlideshowEntryMetadata[];
@@ -63,7 +70,7 @@ const _slideshowEntryManagerClasses: Record<string, SlideshowEntryManagerConstru
 	random: SlideshowEntryManagerRandom,
 };
 
-function getEntriesManagerClass(type: Nullable<string>): SlideshowEntryManagerConstructor {
+export function getEntriesManagerClass(type: string | null): SlideshowEntryManagerConstructor {
 	if(type === null) return SlideshowEntryManagerStandard;
 	const ret = _slideshowEntryManagerClasses[type];
 	assert(ret !== undefined, templateFancyDefer`unknown entry manager type ${type}`);

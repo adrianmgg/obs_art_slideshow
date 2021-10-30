@@ -14,10 +14,13 @@ module.exports = {
 		'plugin:@typescript-eslint/recommended-requiring-type-checking',
 	],
 	rules: {
-		'@typescript-eslint/no-unused-vars': 'off',
+		// '@typescript-eslint/no-unused-vars': 'off',
+		'@typescript-eslint/no-unused-vars': ['error', {
+			argsIgnorePattern: '^_',
+		}],
 		'prefer-const': 'error',
 		'@typescript-eslint/require-await': 'error',
-		'no-prototype-builtins': 'off',
+		'no-prototype-builtins': 'error',
 		'@typescript-eslint/no-inferrable-types': 'off',
 		'@typescript-eslint/no-non-null-assertion': 'off',
 
@@ -60,7 +63,7 @@ module.exports = {
 			selector: ['memberLike', 'property'],
 			modifiers: ['private'],
 			format: ['camelCase'],
-			leadingUnderscore: 'require',
+			leadingUnderscore: 'allow',
 		}],
 		'@typescript-eslint/no-base-to-string': 'error',
 		'@typescript-eslint/no-confusing-non-null-assertion': 'error',

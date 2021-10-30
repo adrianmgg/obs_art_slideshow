@@ -1,4 +1,8 @@
-function initGlobalErrorHandlers(): void {
+import { getElementByIdSafe } from './util.js';
+
+// TODO move this into a hardcoded script tag in index.html so it can report when the main script fails to load
+
+export function initGlobalErrorHandlers(): void {
 	const errorsDisplayContents: HTMLElement = getElementByIdSafe('errors_display_contents');
 
 	function putOnscreenErrorMessage(message: string): void {

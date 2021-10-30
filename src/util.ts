@@ -6,28 +6,26 @@ class AssertionError extends Error {
 	}
 }
 
-function assert(condition: boolean, description?: string | (() => string)): asserts condition {
+export function assert(condition: boolean, description?: string | (() => string)): asserts condition {
 	if(!condition) throw new AssertionError(description);
 }
 
-function getElementByIdSafe(id: string): HTMLElement {
+export function getElementByIdSafe(id: string): HTMLElement {
 	const elem = document.getElementById(id);
 	assert(elem !== null, templateFancyDefer`found no element with id ${id}`);
 	return elem;
 }
 
-function querySelectorSafe<K extends keyof HTMLElementTagNameMap>(target: ParentNode, selector: K): HTMLElementTagNameMap[K];
-function querySelectorSafe<K extends keyof SVGElementTagNameMap>(target: ParentNode, selector: K): SVGElementTagNameMap[K];
-function querySelectorSafe<E extends Element = Element>(target: ParentNode, selector: string): E;
-function querySelectorSafe<E extends Element = Element>(target: ParentNode, selector: string): E {
+export function querySelectorSafe<K extends keyof HTMLElementTagNameMap>(target: ParentNode, selector: K): HTMLElementTagNameMap[K];
+export function querySelectorSafe<K extends keyof SVGElementTagNameMap>(target: ParentNode, selector: K): SVGElementTagNameMap[K];
+export function querySelectorSafe<E extends Element = Element>(target: ParentNode, selector: string): E;
+export function querySelectorSafe<E extends Element = Element>(target: ParentNode, selector: string): E {
 	const elem = target.querySelector<E>(selector);
 	assert(elem !== null, templateFancyDefer`found no element matching selector ${selector} on element ${target}`);
 	return elem;
 }
 
-type Nullable<T> = T | null;
-
-function nextEventFirePromise<T extends EventTarget>(target: T, eventType: string, errorEventType?: string): Promise<void> {
+export function nextEventFirePromise<T extends EventTarget>(target: T, eventType: string, errorEventType?: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		function event(e: Event): void {
 			target.removeEventListener(eventType, event);
@@ -41,7 +39,7 @@ function nextEventFirePromise<T extends EventTarget>(target: T, eventType: strin
 	});
 }
 
-function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unknown>): string {
+export function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unknown>): string {
 	let ret = '';
 	for(let i = 0; i < strings.length; i++) {
 		ret += strings[i];
@@ -61,27 +59,27 @@ function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unkn
 	return ret;
 }
 
-function templateFancyDefer(strings: TemplateStringsArray, ...expressions: Array<unknown>): () => ReturnType<typeof templateFancy> {
+export function templateFancyDefer(strings: TemplateStringsArray, ...expressions: Array<unknown>): () => ReturnType<typeof templateFancy> {
 	return (): string => templateFancy(strings, ...expressions);
 }
 
-async function _fetchSafeNocache(path: string, options?: RequestInit): Promise<Response> {
+async function fetchSafeNocache(path: string, options?: RequestInit): Promise<Response> {
 	const response = await fetch(path, options);
 	assert(response.ok, templateFancyDefer`file ${path} failed to load (${response.status} ${response.statusText})`);
 	return response;
 }
 
-async function fetchTextSafe(path: string, options?: RequestInit): Promise<string> {
-	const response = await _fetchSafeNocache(path, options);
+export async function fetchTextSafe(path: string, options?: RequestInit): Promise<string> {
+	const response = await fetchSafeNocache(path, options);
 	return await response.text();
 }
 
-async function fetchJSONSafe(path: string, options?: RequestInit): Promise<unknown> {
-	const response = await _fetchSafeNocache(path, options);
+export async function fetchJSONSafe(path: string, options?: RequestInit): Promise<unknown> {
+	const response = await fetchSafeNocache(path, options);
 	const responseData: unknown = await response.json();
 	return responseData;
 }
 
-function randomIntBetween(min: number, max: number): number {
+export function randomIntBetween(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min; 
 }
