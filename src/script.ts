@@ -1,22 +1,20 @@
-import { initGlobalErrorHandlers } from './error_handler.js';
-import { getEntriesManagerClass, SlideshowEntryManager } from './image_list_manager.js';
-import { ThemeConfig, _assertIsJSONDataThemeConfig } from './jsondata.js';
-import { SlideshowEntryController } from './slideshow_entry_controller.js';
-import { createSlideshowEntryMetadata } from './slideshow_entry_metadata.js';
-import { SlideshowTheme } from './slideshow_theme.js';
-import { assert, fetchJSONSafe, fetchTextSafe, getElementByIdSafe } from './util.js';
+import { initGlobalErrorHandlers } from './error_handler';
+import { entrycontroller_preload } from './slideshow_entry_controller';
+import { entry_meta_list_managers, EntryMetaListManager } from './entrylist';
+import { loadTheme, SlideshowTheme } from './slideshow_theme';
+import { assert, fetchJSONSafe, getElementByIdSafe, templateFancyDefer } from './util';
+import { isEntryMetadata } from './jsondata';
+import { Globals } from './misc';
+import { dispatchCustomEvent } from './events';
 
-let template: HTMLElement;
-let slideshowContainer: HTMLElement;
-let controlsPanel: HTMLElement;
+async function main(): Promise<void> {
+	let slideshowContainer: HTMLElement;
+	let controlsPanel: HTMLElement;
 
-// let themeConfig: JSONDataThemeConfig;
-let entriesManager: SlideshowEntryManager;
-let theme: SlideshowTheme;
+	let entriesManager: EntryMetaListManager;
+	let theme: SlideshowTheme;
 
-async function init(): Promise<void> {
 	initGlobalErrorHandlers();
-	template = getElementByIdSafe('slideshow_template');
 	slideshowContainer = getElementByIdSafe('slideshow_container');
 	controlsPanel = getElementByIdSafe('slideshow_controls');
 	
@@ -32,38 +30,54 @@ async function init(): Promise<void> {
 	const themeUrlParam = urlParams.get('theme');
 	assert(themeUrlParam !== null, 'theme not specified');
 	const themePath = `themes/${themeUrlParam}`;
-	const entriesManagerClass = getEntriesManagerClass(urlParams.get('entries_manager')); // TODO should rename this to 'order' or something
+	// TODO should rename this to 'order' or something
+	// TODO should have default url params in one place rather than doing this
+	const entryManagerName = urlParams.get('entries_manager') ?? 'standard'; 
+	const entryMetaManager = entry_meta_list_managers[entryManagerName];
+	assert(entryMetaManager !== undefined, templateFancyDefer`unknown entry manager ${entryManagerName}, valid values are ${Object.keys(entry_meta_list_managers)}`);
 
 	[entriesManager, theme] = await Promise.all([
 		// load images list
-		(async function loadImagesList(): Promise<SlideshowEntryManager> {
+		(async function loadImagesList(): Promise<EntryMetaListManager> {
 			const data = await fetchJSONSafe('images.json', {cache: 'no-cache'});
-			// TODO the isarray & map should be factored out to a helper in another file
+			// TODO should the isarray & map should be factored out to a helper in another file?
 			assert(Array.isArray(data));
-			return new entriesManagerClass(data.map(createSlideshowEntryMetadata));
+			assert(data.every(isEntryMetadata));
+			return entryMetaManager(data);
 		})(),
 		// load theme
-		SlideshowTheme.loadTheme(themePath),
+		loadTheme(themePath),
 	]);
-}
 
-async function run(): Promise<never> {
-	let nextImage: SlideshowEntryController = new SlideshowEntryController(entriesManager.nextEntry(), theme);
+	
+	const slideshowContainerShadow = slideshowContainer.attachShadow({mode:'open'});
+	slideshowContainerShadow.appendChild(theme.style);
+	slideshowContainerShadow.appendChild(theme.script);
+
+
+	dispatchCustomEvent(document, 'slideshowinit', {
+		root: slideshowContainerShadow,
+	});
+
+
+	const globals: Globals = Object.freeze({
+		theme,
+	});
+
+
+	let nextEntry = entrycontroller_preload(globals, entriesManager.next().value);
 	// we're displaying each image one at a time, so in this specific case we don't want to run these promises in parallel
 	/* eslint-disable no-await-in-loop */
-	while(true) {
-		const currentImage = nextImage;
-		// instance the next image before running the current one, to give it more time to load
-		nextImage = new SlideshowEntryController(entriesManager.nextEntry(), theme);
-		await currentImage.run();
+	for(const entry of entriesManager) {
+		const currentEntry = nextEntry;
+		// start loading the next one as early as possible
+		nextEntry = entrycontroller_preload(globals, entry);
+		// make sure the current one is loaded it's finished loading, then display it, and wait for it to be done displaying
+		await (await currentEntry)(slideshowContainerShadow);
 	}
 	/* eslint-enable no-await-in-loop */
 }
 
-async function main(): Promise<void> {
-	await init();
-	await run();
-}
-
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 window.addEventListener('DOMContentLoaded', main);
+

@@ -25,6 +25,7 @@
 		"strictBindCallApply": true,
 		"useUnknownInCatchVariables": true,
 		"noUncheckedIndexedAccess": true,
+		"moduleResolution": "node",
 	},
 	//"files": [ "./src/script.ts" ]
 	// "include": [

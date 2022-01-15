@@ -39,6 +39,10 @@ export function nextEventFirePromise<T extends EventTarget>(target: T, eventType
 	});
 }
 
+export function waitMS(ms: number): Promise<void> {
+	return new Promise((resolve)=>setTimeout(resolve, ms));
+}
+
 export function templateFancy(strings: TemplateStringsArray, ...expressions: Array<unknown>): string {
 	let ret = '';
 	for(let i = 0; i < strings.length; i++) {
@@ -48,7 +52,9 @@ export function templateFancy(strings: TemplateStringsArray, ...expressions: Arr
 			if(expression instanceof Element) {
 				// manual cast needed since cloneNode just returns Node
 				// shallow cloneNode + outerHTML since we want a string representation of JUST the node itself, not any of its children
-				ret += (expression.cloneNode(false) as typeof expression).outerHTML;
+				const elem = (expression.cloneNode(false) as typeof expression);
+				if(expression.childNodes.length > 0) elem.textContent = '...';
+				ret += elem.outerHTML;
 			}
 			// using JSON.stringify means that:
 			//   - strings will be surrounded in quotes and have backslashes properly escaped
@@ -83,3 +89,17 @@ export async function fetchJSONSafe(path: string, options?: RequestInit): Promis
 export function randomIntBetween(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min; 
 }
+
+
+export function specificAnimationCompletePromise(target: HTMLElement, animationName: string): Promise<void> {
+	return new Promise((resolve) => {
+		const listener = (e: AnimationEvent) => {
+			if(e.animationName === animationName) {
+				target.removeEventListener('animationend', listener);
+				resolve();
+			}
+		};
+		target.addEventListener('animationend', listener);
+	});
+}
+

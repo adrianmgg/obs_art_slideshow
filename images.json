@@ -1,4 +1,4 @@
 [
-	{"path":"images/testpattern.png", "artist":"somebody"},
-	{"path":"images/testpattern2.png", "artist":"somebody else"}
+	{"image":"images/testpattern.png", "credit":"somebody"},
+	{"image":"images/testpattern2.png", "credit":"somebody else"},
 ]

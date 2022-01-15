@@ -1,4 +1,4 @@
-import { getElementByIdSafe } from './util.js';
+import { getElementByIdSafe } from './util';
 
 // TODO move this into a hardcoded script tag in index.html so it can report when the main script fails to load
 

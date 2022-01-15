@@ -1,33 +1,35 @@
-import { allOf, anyOf, arrayOf, theseKeys, isNull, isNumber, isString, TypeGuard } from './json_validation.js';
+import { allOf, anyOf, arrayOf, theseKeys, isNull, isNumber, isString, TypeGuard } from './json_validation';
 
-interface ImagePart {
+export interface ImagePart {
 	image: string;
 }
-const isImagePart: TypeGuard<ImagePart> = theseKeys({
+export const isImagePart: TypeGuard<ImagePart> = theseKeys({
 	required: {
 		image: isString,
 	},
 });
 
-interface VideoPart {
+export interface VideoPart {
 	video: string;
 }
-const isVideoPart: TypeGuard<VideoPart> = theseKeys({
+export const isVideoPart: TypeGuard<VideoPart> = theseKeys({
 	required: {
 		video: isString,
 	},
 });
 
-interface GroupPart {
-	children: (ImagePart | VideoPart)[];
+export interface GroupPart {
+	group: (ImagePart | VideoPart)[];
 }
-const isGroupPart: TypeGuard<GroupPart> = theseKeys({
+export const isGroupPart: TypeGuard<GroupPart> = theseKeys({
 	required: {
-		children: arrayOf(anyOf(isImagePart, isVideoPart)),
+		group: arrayOf(anyOf(isImagePart, isVideoPart)),
 	},
 });
 
-interface CreditPart {
+export type MediaPart = GroupPart | ImagePart | VideoPart;
+
+export interface CreditPart {
 	credit: string;
 }
 const isCreditPart: TypeGuard<CreditPart> = theseKeys({
@@ -37,7 +39,7 @@ const isCreditPart: TypeGuard<CreditPart> = theseKeys({
 });
 
 export type EntryMetadata = (ImagePart | VideoPart | GroupPart) & CreditPart;
-export const isMediaEntry: TypeGuard<EntryMetadata> = allOf(
+export const isEntryMetadata: TypeGuard<EntryMetadata> = allOf(
 	isCreditPart,
 	anyOf(isVideoPart, isImagePart, isGroupPart),
 );
