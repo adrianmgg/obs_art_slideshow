@@ -1,0 +1,18 @@
+{
+	"text_color": {
+		"type": "color",
+		"default": "#FFFFFF"
+	},
+	"text_outline_color": {
+		"type": "color",
+		"default": "#6000B1"
+	},
+	"intro_anim_duration": {
+		"type": "float",
+		"default": 2.0
+	},
+	"outro_anim_duration": {
+		"type": "float",
+		"default": 2.0
+	}
+}

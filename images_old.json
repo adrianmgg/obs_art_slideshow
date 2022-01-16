@@ -1,0 +1,6 @@
+[
+	{"image":"images/testpattern.png", "credit":"somebody"},
+	{"image":"images/testpattern2.png", "credit":"somebody else"},
+	{"image":"https://upload.wikimedia.org/wikipedia/commons/2/28/JPG_Test.jpg", "credit":"Wikimedia Commons"},
+	{"video":"images/2.webm", "credit":"really really really really really really long name"}
+]

@@ -1,18 +1,16 @@
 import { initGlobalErrorHandlers } from './error_handler';
 import { entrycontroller_preload } from './slideshow_entry_controller';
 import { entry_meta_list_managers, EntryMetaListManager } from './entrylist';
-import { loadTheme, SlideshowTheme } from './slideshow_theme';
+import { loadTheme } from './slideshow_theme';
 import { assert, fetchJSONSafe, getElementByIdSafe, templateFancyDefer } from './util';
 import { isEntryMetadata } from './jsondata';
 import { Globals } from './misc';
 import { dispatchCustomEvent } from './events';
+import { setup_option_gui } from './option_gui';
 
 async function main(): Promise<void> {
 	let slideshowContainer: HTMLElement;
 	let controlsPanel: HTMLElement;
-
-	let entriesManager: EntryMetaListManager;
-	let theme: SlideshowTheme;
 
 	initGlobalErrorHandlers();
 	slideshowContainer = getElementByIdSafe('slideshow_container');
@@ -36,7 +34,7 @@ async function main(): Promise<void> {
 	const entryMetaManager = entry_meta_list_managers[entryManagerName];
 	assert(entryMetaManager !== undefined, templateFancyDefer`unknown entry manager ${entryManagerName}, valid values are ${Object.keys(entry_meta_list_managers)}`);
 
-	[entriesManager, theme] = await Promise.all([
+	const [entriesManager, theme, userThemeOptions] = await Promise.all([
 		// load images list
 		(async function loadImagesList(): Promise<EntryMetaListManager> {
 			const data = await fetchJSONSafe('images.json', {cache: 'no-cache'});
@@ -47,23 +45,51 @@ async function main(): Promise<void> {
 		})(),
 		// load theme
 		loadTheme(themePath),
+		// load user's overrides for the theme options, if specified
+		(async function loadUserThemeOptions(): Promise<Record<string, string>> {
+			const themeOptionsFile = urlParams.get('theme_options');
+			if(themeOptionsFile !== null) {
+				// TODO write validator
+				return await fetchJSONSafe(themeOptionsFile, {cache: 'no-cache'}) as Record<string, string>;
+			}
+			else return {};
+		})(),
 	]);
 
-	
+
+	const finalThemeOptions = {
+		...Object.fromEntries(Object.entries(theme.optionsInfo).map(([k,v])=>[k,v?.default])),
+		...userThemeOptions,
+	};
+
+
 	const slideshowContainerShadow = slideshowContainer.attachShadow({mode:'open'});
 	slideshowContainerShadow.appendChild(theme.style);
 	slideshowContainerShadow.appendChild(theme.script);
 
+	// TODO what do if sheet is null?
+	// TODO theres so many !s i rly gotta make this cleaner
+	// TODO assert the type rather than casting
+	// TODO probably move this to a helper function
+	// TODO wow thats a lot of TODOs lmao
+	const rootRule: CSSStyleRule = theme.style.sheet!.cssRules[theme.style.sheet!.insertRule(':host{}', theme.style.sheet!.cssRules.length)]! as CSSStyleRule;
+	
+	// pass options in via css vars
+	for(const k in finalThemeOptions) {
+		rootRule.style.setProperty(`--option-${k}`, String(finalThemeOptions[k]));
+	}
 
 	dispatchCustomEvent(document, 'slideshowinit', {
 		root: slideshowContainerShadow,
 	});
 
-
 	const globals: Globals = Object.freeze({
 		theme,
+		themeOptions: finalThemeOptions,
+		themeRootRule: rootRule,
 	});
 
+	setup_option_gui(globals, getElementByIdSafe('slideshow_controls'));
 
 	let nextEntry = entrycontroller_preload(globals, entriesManager.next().value);
 	// we're displaying each image one at a time, so in this specific case we don't want to run these promises in parallel

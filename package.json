@@ -12,6 +12,7 @@
     },
     "scripts": {
         "build": "npx rollup --config",
-        "serve": "python server.py"
+        "serve": "python server.py",
+        "lint": "npx eslint ./src --ext .ts"
     }
 }

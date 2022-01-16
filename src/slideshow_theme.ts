@@ -12,15 +12,24 @@ ShadowRoot
 <template>
 */
 
+export type ThemeOptionsInfo = Record<string, ({
+	type: 'color';
+	default: string;
+} | {
+	type: 'float';
+	default: number;
+})>;
+
 export interface SlideshowTheme {
 	readonly config: ThemeConfig;
 	readonly template: HTMLElement;
 	readonly style: HTMLStyleElement;
 	readonly script: HTMLScriptElement;
+	readonly optionsInfo: ThemeOptionsInfo;
 }
 
 export async function loadTheme(basePath: string): Promise<SlideshowTheme> {
-	const [config, template, style, script] = await Promise.all([
+	const [config, template, style, script, optionsInfo] = await Promise.all([
 		// load theme config
 		(async function loadThemeConfig(): Promise<ThemeConfig> {
 			const data = await fetchJSONSafe(`${basePath}/theme_config.json`, {cache: 'no-cache'});
@@ -51,7 +60,13 @@ export async function loadTheme(basePath: string): Promise<SlideshowTheme> {
 				innerHTML: await fetchTextSafe(`${basePath}/slideshow_script.js`, {cache: 'no-cache'})
 			});
 		})(),
+		// load options file
+		(async function loadOptions(): Promise<ThemeOptionsInfo> {
+			const data = await fetchJSONSafe(`${basePath}/options.json`, {cache: 'no-cache'});
+			// TODO write validator
+			return data as ThemeOptionsInfo;;
+		})(),
 	]);
-	return Object.freeze({ config, template, style, script });
+	return Object.freeze({ config, template, style, script, optionsInfo });
 }
 

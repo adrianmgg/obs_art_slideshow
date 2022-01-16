@@ -59,7 +59,7 @@
 	height: 100vh;
 	top: 0px;
 	left: 0px;
-	pointer-events: none;
+	/* pointer-events: none; */
 }
 #slideshow_controls.visible {
 	display: unset;

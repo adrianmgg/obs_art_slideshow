@@ -4,5 +4,7 @@ import { SlideshowTheme } from './slideshow_theme';
 // TODO give this a better name
 export interface Globals {
 	theme: SlideshowTheme;
+	themeOptions: Record<string, string | number | null>;
+	themeRootRule: CSSStyleRule;
 };
 
